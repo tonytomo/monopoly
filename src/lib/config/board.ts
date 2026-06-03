@@ -55,7 +55,7 @@ export const board: Property[] = [
     },
     {
         id: 7,
-        name: "Chance",
+        name: "Kesempatan",
         type: PropertyType.Chance,
         price: emptyPrice,
         rent: emptyRent,
@@ -258,7 +258,7 @@ export const board: Property[] = [
     },
     {
         id: 36,
-        name: "Chance",
+        name: "Kesempatan",
         type: PropertyType.Chance,
         price: emptyPrice,
         rent: emptyRent,

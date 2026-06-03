@@ -6,7 +6,23 @@ export function cameraTo(id: number) {
     if (targetElement) {
         targetElement.scrollIntoView({
             behavior: 'smooth',
-            block: 'center'
+            block: 'center',
+            inline: 'center'
         });
     }
+}
+
+export function cameraRotate(id: number) {
+    if (id >= 10 && id < 20)
+        return '-rotate-90';
+    else if (id >= 20 && id < 30)
+        return '-rotate-180';
+    else if (id >= 30 && id < 40)
+        return '-rotate-270';
+    // else if (id >= 40)
+    //     return '-rotate-360';
+    // else if (id <= 0)
+    //     return 'rotate-90';
+    else
+        return 'rotate-0';
 }

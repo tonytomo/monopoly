@@ -27,9 +27,10 @@
 <button
 	id="s{property.id}"
 	onclick={click}
-	class="relative cursor-pointer scroll-m-32 border {!isCityProperty(property)
-		? bgColor
-		: ''} {$currentId === property.id ? 'border-8 border-red-500' : ''}"
+	class="relative cursor-pointer border {!isCityProperty(property) ? bgColor : ''} {$currentId ===
+	property.id
+		? 'border-8 border-red-500'
+		: ''}"
 >
 	{#if isCityProperty(property)}
 		{#if orientation === 'b'}

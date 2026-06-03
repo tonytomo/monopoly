@@ -3,7 +3,7 @@
 	import { cameraTo } from '$lib/utils/camera-utils';
 	import { onMount } from 'svelte';
 	import { board } from '../lib/config/board';
-	import { currentId, next, previous, zoom } from '$lib/stores/game';
+	import { currentId, next, previous, rotate, zoom } from '$lib/stores/game';
 
 	const bottomRow = board.slice(0, 11).toReversed();
 	const leftRow = board.slice(11, 20).toReversed();
@@ -17,7 +17,7 @@
 
 	function toggleZoom() {
 		$zoom = !$zoom;
-		new Promise((resolve) => setTimeout(resolve, 10)).then(() => cameraTo($currentId));
+		new Promise((resolve) => setTimeout(resolve, 200)).then(() => cameraTo($currentId));
 	}
 </script>
 
@@ -30,8 +30,8 @@
 	<button onclick={toggleZoom}>Zoom</button>
 </div>
 
-<main class="relative h-screen w-screen overflow-auto">
-	<section id="board" class="grid-board {$zoom ? 'zoom-in' : 'zoom-out'}">
+<main class="relative h-screen w-screen overflow-hidden">
+	<section id="board" class="grid-board {$rotate} {$zoom ? 'zoom-in' : 'zoom-out'}">
 		{#each Array.from({ length: 11 }).map((_, i) => i) as i (i)}
 			{#if i === 0}
 				{#each topRow as property (property.id)}
