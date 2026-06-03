@@ -19,10 +19,6 @@ export function cameraRotate(id: number) {
         return '-rotate-180';
     else if (id >= 30 && id < 40)
         return '-rotate-270';
-    // else if (id >= 40)
-    //     return '-rotate-360';
-    // else if (id <= 0)
-    //     return 'rotate-90';
     else
         return 'rotate-0';
 }

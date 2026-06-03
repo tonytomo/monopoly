@@ -28,3 +28,15 @@ export function previous() {
         cameraTo((id - 1 + 40) % 40);
     }
 }
+
+export async function move(steps: number) {
+    for (let i = 0; i < steps; i++) {
+        next();
+        await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+}
+
+export function toggleZoom() {
+    zoom.update((z) => !z);
+    new Promise((resolve) => setTimeout(resolve, 200)).then(() => cameraTo(get(currentId)));
+}
