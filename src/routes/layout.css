@@ -1,1 +1,37 @@
 @import 'tailwindcss';
+
+@layer base {
+	html {
+		scroll-behavior: smooth;
+	}
+}
+
+@layer utilities {
+	.grid-board {
+		margin-inline: auto;
+		display: grid;
+		aspect-ratio: 1/1;
+		grid-template-columns: 12.2% 8.4% 8.4% 8.4% 8.4% 8.4% 8.4% 8.4% 8.4% 8.4% 12.2%;
+		grid-template-rows: 12.2% 8.4% 8.4% 8.4% 8.4% 8.4% 8.4% 8.4% 8.4% 8.4% 12.2%;
+	}
+
+	.zoom-in {
+		padding: 2rem;
+		height: 500vh;
+	}
+
+	.zoom-out {
+		padding: 1rem;
+		height: 100vh;
+	}
+
+	.prop-left {
+		writing-mode: vertical-rl;
+		text-orientation: mixed;
+	}
+
+	.prop-right {
+		writing-mode: sideways-lr;
+		text-orientation: mixed;
+	}
+}
