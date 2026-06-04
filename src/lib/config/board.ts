@@ -262,8 +262,8 @@ export const boardProperties: Property[] = [
     },
     {
         id: 32,
-        name: "Ternate",
-        displayName: "TRN",
+        name: "Bali",
+        displayName: "Bali",
         type: PropertyType.PropertyG,
         price: { basePrice: 300, housePrice: 200, mortgagePrice: 150 },
         rent: { baseRent: 26, house1: 130, house2: 390, house3: 900, house4: 1100, hotel: 1275 },
@@ -302,8 +302,8 @@ export const boardProperties: Property[] = [
     },
     {
         id: 37,
-        name: "Bali",
-        displayName: "Bali",
+        name: "Ibukota Nusantara",
+        displayName: "IKN",
         type: PropertyType.PropertyH,
         price: { basePrice: 350, housePrice: 200, mortgagePrice: 175 },
         rent: { baseRent: 35, house1: 175, house2: 500, house3: 1100, house4: 1300, hotel: 1500 },

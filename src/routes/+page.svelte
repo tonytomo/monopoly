@@ -4,6 +4,7 @@
 	import { boardProperties } from '../lib/config/board';
 	import { currentId } from '$lib/stores/game';
 	import DicePanel from '$lib/components/dice-panel.svelte';
+	import DetailsPanel from '$lib/components/details-panel.svelte';
 
 	const bottomRow = boardProperties.slice(0, 11).toReversed();
 	const leftRow = boardProperties.slice(11, 20).toReversed();
@@ -14,6 +15,8 @@
 		$currentId = 0;
 	});
 </script>
+
+<DetailsPanel />
 
 <DicePanel />
 

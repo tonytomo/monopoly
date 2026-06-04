@@ -1,6 +1,7 @@
 import { writable, get } from 'svelte/store';
 
 export const currentId = writable<number>(0);
+export const activeId = writable<number>(-1);
 
 export function next() {
     const id = get(currentId);

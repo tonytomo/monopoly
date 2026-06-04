@@ -133,7 +133,7 @@
 <style>
 	.dice-panel {
 		position: fixed;
-		right: 2rem;
+		left: 2rem;
 		bottom: 2rem;
 		z-index: 50;
 		display: flex;

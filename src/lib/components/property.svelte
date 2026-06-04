@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { boardProperties } from '$lib/config/board';
-	import { currentId } from '$lib/stores/game';
+	import { activeId, currentId } from '$lib/stores/game';
 	import { type Property } from '../types/property';
 	import {
 		getPropertyColor,
@@ -22,7 +21,7 @@
 	let rounded = $derived(getRoundedCorner(orientation));
 
 	function click() {
-		console.log(boardProperties[property.id].name);
+		$activeId = property.id;
 	}
 </script>
 
