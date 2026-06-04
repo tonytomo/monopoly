@@ -144,13 +144,13 @@
 			transition:scale={{ start: 0.85, duration: 350, easing: cubicOut }}
 			class="middle-result-card pointer-events-auto"
 		>
-			<span class="step-label">Langkah Berjalan</span>
-			<div class="number-display">
-				{die1 + die2}
-			</div>
 			{#if die1 === die2}
 				<div transition:fade={{ delay: 150, duration: 200 }} class="double-badge">DADU KEMBAR</div>
 			{/if}
+			<div class="number-display">
+				{die1 + die2}
+			</div>
+			<span class="step-label">Langkah</span>
 		</div>
 	</div>
 {/if}
