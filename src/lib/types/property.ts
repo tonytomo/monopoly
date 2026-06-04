@@ -1,6 +1,7 @@
 export interface Property {
     id: number;
     name: string;
+    displayName: string;
     type: PropertyType;
     price: PropertyPrice;
     rent: PropertyRent;
@@ -20,7 +21,10 @@ export enum PropertyType {
     Chance,
     CommunityChest,
     Tax,
-    Corner,
+    Go,
+    Jail,
+    FreeParking,
+    GoToJail,
 }
 
 export interface PropertyPrice {

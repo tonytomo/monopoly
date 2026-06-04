@@ -1,10 +1,11 @@
 <script lang="ts">
-	import { board } from '$lib/config/board';
-	import { currentId, zoom } from '$lib/stores/game';
-	import type { Property } from '../types/property';
+	import { boardProperties } from '$lib/config/board';
+	import { currentId } from '$lib/stores/game';
+	import { type Property } from '../types/property';
 	import {
 		getPropertyColor,
 		getPropertyRotation,
+		getRoundedCorner,
 		isBuyableProperty,
 		isCityProperty
 	} from '$lib/utils/property-utils';
@@ -18,38 +19,78 @@
 
 	let bgColor = $derived(getPropertyColor(property));
 	let rotation = $derived(getPropertyRotation(orientation));
+	let rounded = $derived(getRoundedCorner(orientation));
 
 	function click() {
-		console.log(board[property.id].name);
+		console.log(boardProperties[property.id].name);
 	}
 </script>
 
 <button
 	id="s{property.id}"
 	onclick={click}
-	class="relative cursor-pointer border {!isCityProperty(property) ? bgColor : ''} {$currentId ===
-	property.id
-		? 'border-8 border-red-500'
-		: ''}"
+	class="relative cursor-pointer border border-neutral-300 {rounded} {!isCityProperty(property)
+		? bgColor
+		: ''} {$currentId === property.id ? 'ring-4 ring-red-500' : ''}"
 >
 	{#if isCityProperty(property)}
 		{#if orientation === 'b'}
-			<div class="absolute top-0 {$zoom ? 'h-15' : 'h-2'} w-full border {bgColor}"></div>
+			<div
+				class="absolute top-0 grid min-h-8 w-full place-items-center border-b border-neutral-200 py-1 {bgColor}"
+			>
+				<p class="text-[0.6rem] font-bold tracking-wide text-white uppercase {rotation}">
+					{property.displayName}
+				</p>
+			</div>
 		{/if}
 		{#if orientation === 't'}
-			<div class="absolute bottom-0 {$zoom ? 'h-15' : 'h-2'} w-full border {bgColor}"></div>
+			<div
+				class="absolute bottom-0 grid min-h-8 w-full place-items-center border-t border-neutral-200 py-1 {bgColor}"
+			>
+				<p class="text-[0.6rem] font-bold tracking-wide text-white uppercase {rotation}">
+					{property.displayName}
+				</p>
+			</div>
 		{/if}
 		{#if orientation === 'l'}
-			<div class="absolute top-0 right-0 h-full border {$zoom ? 'w-15' : 'w-2'} {bgColor}"></div>
+			<div
+				class="absolute top-0 right-0 grid h-full min-w-8 place-items-center border-l border-neutral-200 px-1 {bgColor}"
+			>
+				<p class="text-[0.6rem] font-bold tracking-wide text-white uppercase {rotation}">
+					{property.displayName}
+				</p>
+			</div>
 		{/if}
 		{#if orientation === 'r'}
-			<div class="absolute top-0 left-0 h-full border {$zoom ? 'w-15' : 'w-2'} {bgColor}"></div>
+			<div
+				class="absolute top-0 left-0 grid h-full min-w-8 place-items-center border-r border-neutral-200 px-1 {bgColor}"
+			>
+				<p class="text-[0.6rem] font-bold tracking-wide text-white uppercase {rotation}">
+					{property.displayName}
+				</p>
+			</div>
 		{/if}
 	{/if}
-	<div class="flex flex-col gap-16 place-self-center {rotation}">
-		<p class={$zoom ? 'text-4xl font-bold' : 'text-[0.5rem] font-medium'}>{property.name}</p>
-		{#if $zoom && isBuyableProperty(property)}
-			<p class="text-4xl font-medium">Rp{property.price.basePrice} Juta</p>
+	<div
+		class="flex size-full {rotation} {isBuyableProperty(property)
+			? 'justify-between'
+			: 'justify-center'} {['l', 't'].includes(orientation) ? 'flex-col-reverse' : 'flex-col'}"
+	>
+		{#if !isCityProperty(property)}
+			<p
+				class="font-bold tracking-wide uppercase {property.displayName.length > 1
+					? 'text-[0.6rem]'
+					: 'text-2xl'}"
+			>
+				{property.displayName}
+			</p>
+		{:else}
+			<div></div>
+		{/if}
+		{#if isBuyableProperty(property)}
+			<p class="text-[0.75rem] font-medium">
+				{property.price.basePrice}M
+			</p>
 		{/if}
 	</div>
 </button>

@@ -3,17 +3,19 @@ import { PropertyType, type Property } from "../types/property";
 const emptyPrice = { basePrice: 0, housePrice: 0, mortgagePrice: 0 };
 const emptyRent = { baseRent: 0, house1: 0, house2: 0, house3: 0, house4: 0, hotel: 0 };
 
-export const board: Property[] = [
+export const boardProperties: Property[] = [
     {
         id: 0,
-        name: "Mulai/Gajian",
-        type: PropertyType.Corner,
+        name: "Mulai",
+        displayName: "Mulai",
+        type: PropertyType.Go,
         price: emptyPrice,
         rent: emptyRent,
     },
     {
         id: 1,
         name: "Depok",
+        displayName: "Depok",
         type: PropertyType.PropertyA,
         price: { basePrice: 60, housePrice: 50, mortgagePrice: 30 },
         rent: { baseRent: 2, house1: 10, house2: 30, house3: 90, house4: 160, hotel: 250 },
@@ -21,6 +23,7 @@ export const board: Property[] = [
     {
         id: 2,
         name: "Dana Umum",
+        displayName: "Dana Umum",
         type: PropertyType.CommunityChest,
         price: emptyPrice,
         rent: emptyRent,
@@ -28,6 +31,7 @@ export const board: Property[] = [
     {
         id: 3,
         name: "Bekasi",
+        displayName: "Bekasi",
         type: PropertyType.PropertyA,
         price: { basePrice: 60, housePrice: 50, mortgagePrice: 30 },
         rent: { baseRent: 4, house1: 20, house2: 60, house3: 180, house4: 320, hotel: 450 },
@@ -35,6 +39,7 @@ export const board: Property[] = [
     {
         id: 4,
         name: "Pajak",
+        displayName: "Pajak",
         type: PropertyType.Tax,
         price: emptyPrice,
         rent: { ...emptyRent, baseRent: 200 },
@@ -42,6 +47,7 @@ export const board: Property[] = [
     {
         id: 5,
         name: "Stasiun Gambir",
+        displayName: "Stasiun Gambir",
         type: PropertyType.Station,
         price: { basePrice: 200, housePrice: 0, mortgagePrice: 100 },
         rent: { ...emptyRent, baseRent: 25 },
@@ -49,6 +55,7 @@ export const board: Property[] = [
     {
         id: 6,
         name: "Bogor",
+        displayName: "Bogor",
         type: PropertyType.PropertyB,
         price: { basePrice: 100, housePrice: 50, mortgagePrice: 50 },
         rent: { baseRent: 6, house1: 30, house2: 90, house3: 270, house4: 400, hotel: 550 },
@@ -56,13 +63,15 @@ export const board: Property[] = [
     {
         id: 7,
         name: "Kesempatan",
+        displayName: "?",
         type: PropertyType.Chance,
         price: emptyPrice,
         rent: emptyRent,
     },
     {
         id: 8,
-        name: "Lembang",
+        name: "Lampung",
+        displayName: "LA",
         type: PropertyType.PropertyB,
         price: { basePrice: 100, housePrice: 50, mortgagePrice: 50 },
         rent: { baseRent: 6, house1: 30, house2: 90, house3: 270, house4: 400, hotel: 550 },
@@ -70,20 +79,23 @@ export const board: Property[] = [
     {
         id: 9,
         name: "Bandung",
+        displayName: "BDG",
         type: PropertyType.PropertyB,
         price: { basePrice: 120, housePrice: 50, mortgagePrice: 60 },
         rent: { baseRent: 8, house1: 40, house2: 100, house3: 300, house4: 450, hotel: 600 },
     },
     {
         id: 10,
-        name: "Penjara/Hanya Lewat",
-        type: PropertyType.Corner,
+        name: "Penjara",
+        displayName: "Penjara",
+        type: PropertyType.Jail,
         price: emptyPrice,
         rent: emptyRent,
     },
     {
         id: 11,
         name: "Solo",
+        displayName: "SOLO",
         type: PropertyType.PropertyC,
         price: { basePrice: 140, housePrice: 100, mortgagePrice: 70 },
         rent: { baseRent: 10, house1: 50, house2: 150, house3: 450, house4: 625, hotel: 750 },
@@ -91,6 +103,7 @@ export const board: Property[] = [
     {
         id: 12,
         name: "PLN",
+        displayName: "PLN",
         type: PropertyType.Utility,
         price: { basePrice: 150, housePrice: 0, mortgagePrice: 75 },
         rent: emptyRent,
@@ -98,6 +111,7 @@ export const board: Property[] = [
     {
         id: 13,
         name: "Semarang",
+        displayName: "SMG",
         type: PropertyType.PropertyC,
         price: { basePrice: 140, housePrice: 100, mortgagePrice: 70 },
         rent: { baseRent: 10, house1: 50, house2: 150, house3: 450, house4: 625, hotel: 750 },
@@ -105,6 +119,7 @@ export const board: Property[] = [
     {
         id: 14,
         name: "Yogyakarta",
+        displayName: "JOGJA",
         type: PropertyType.PropertyC,
         price: { basePrice: 160, housePrice: 100, mortgagePrice: 80 },
         rent: { baseRent: 12, house1: 60, house2: 180, house3: 500, house4: 700, hotel: 900 },
@@ -112,6 +127,7 @@ export const board: Property[] = [
     {
         id: 15,
         name: "Stasiun Bandung",
+        displayName: "Stasiun Hall",
         type: PropertyType.Station,
         price: { basePrice: 200, housePrice: 0, mortgagePrice: 100 },
         rent: { ...emptyRent, baseRent: 25 },
@@ -119,6 +135,7 @@ export const board: Property[] = [
     {
         id: 16,
         name: "Malang",
+        displayName: "MLG",
         type: PropertyType.PropertyD,
         price: { basePrice: 180, housePrice: 100, mortgagePrice: 90 },
         rent: { baseRent: 14, house1: 70, house2: 200, house3: 550, house4: 750, hotel: 950 },
@@ -126,6 +143,7 @@ export const board: Property[] = [
     {
         id: 17,
         name: "Dana Umum",
+        displayName: "Dana Umum",
         type: PropertyType.CommunityChest,
         price: emptyPrice,
         rent: emptyRent,
@@ -133,6 +151,7 @@ export const board: Property[] = [
     {
         id: 18,
         name: "Batu",
+        displayName: "Batu",
         type: PropertyType.PropertyD,
         price: { basePrice: 180, housePrice: 100, mortgagePrice: 90 },
         rent: { baseRent: 14, house1: 70, house2: 200, house3: 550, house4: 750, hotel: 950 },
@@ -140,20 +159,23 @@ export const board: Property[] = [
     {
         id: 19,
         name: "Surabaya",
+        displayName: "SBY",
         type: PropertyType.PropertyD,
         price: { basePrice: 200, housePrice: 100, mortgagePrice: 100 },
         rent: { baseRent: 16, house1: 80, house2: 220, house3: 600, house4: 800, hotel: 1000 },
     },
     {
         id: 20,
-        name: "Free Parking",
-        type: PropertyType.Corner,
+        name: "Parkir Gratis",
+        displayName: "Parkir Gratis",
+        type: PropertyType.FreeParking,
         price: emptyPrice,
         rent: emptyRent,
     },
     {
         id: 21,
         name: "Palembang",
+        displayName: "PLG",
         type: PropertyType.PropertyE,
         price: { basePrice: 220, housePrice: 150, mortgagePrice: 110 },
         rent: { baseRent: 18, house1: 90, house2: 250, house3: 700, house4: 875, hotel: 1050 },
@@ -161,6 +183,7 @@ export const board: Property[] = [
     {
         id: 22,
         name: "Kesempatan",
+        displayName: "?",
         type: PropertyType.Chance,
         price: emptyPrice,
         rent: emptyRent,
@@ -168,6 +191,7 @@ export const board: Property[] = [
     {
         id: 23,
         name: "Batam",
+        displayName: "Batam",
         type: PropertyType.PropertyE,
         price: { basePrice: 220, housePrice: 150, mortgagePrice: 110 },
         rent: { baseRent: 18, house1: 90, house2: 250, house3: 700, house4: 875, hotel: 1050 },
@@ -175,6 +199,7 @@ export const board: Property[] = [
     {
         id: 24,
         name: "Medan",
+        displayName: "Medan",
         type: PropertyType.PropertyE,
         price: { basePrice: 240, housePrice: 150, mortgagePrice: 120 },
         rent: { baseRent: 20, house1: 100, house2: 300, house3: 750, house4: 925, hotel: 1100 },
@@ -182,6 +207,7 @@ export const board: Property[] = [
     {
         id: 25,
         name: "Stasiun Tugu",
+        displayName: "Stasiun Tugu",
         type: PropertyType.Station,
         price: { basePrice: 200, housePrice: 0, mortgagePrice: 100 },
         rent: { ...emptyRent, baseRent: 25 },
@@ -189,6 +215,7 @@ export const board: Property[] = [
     {
         id: 26,
         name: "Balikpapan",
+        displayName: "Balik Papan",
         type: PropertyType.PropertyF,
         price: { basePrice: 260, housePrice: 150, mortgagePrice: 130 },
         rent: { baseRent: 22, house1: 110, house2: 330, house3: 800, house4: 975, hotel: 1150 },
@@ -196,6 +223,7 @@ export const board: Property[] = [
     {
         id: 27,
         name: "Samarinda",
+        displayName: "SMR",
         type: PropertyType.PropertyF,
         price: { basePrice: 260, housePrice: 150, mortgagePrice: 130 },
         rent: { baseRent: 22, house1: 110, house2: 330, house3: 800, house4: 975, hotel: 1150 },
@@ -203,6 +231,7 @@ export const board: Property[] = [
     {
         id: 28,
         name: "PDAM",
+        displayName: "PDAM",
         type: PropertyType.Utility,
         price: { basePrice: 150, housePrice: 0, mortgagePrice: 75 },
         rent: emptyRent,
@@ -210,6 +239,7 @@ export const board: Property[] = [
     {
         id: 29,
         name: "Makassar",
+        displayName: "MKS",
         type: PropertyType.PropertyF,
         price: { basePrice: 280, housePrice: 150, mortgagePrice: 140 },
         rent: { baseRent: 24, house1: 120, house2: 360, house3: 850, house4: 1025, hotel: 1200 },
@@ -217,20 +247,23 @@ export const board: Property[] = [
     {
         id: 30,
         name: "Masuk Penjara",
-        type: PropertyType.Corner,
+        displayName: "Masuk Penjara",
+        type: PropertyType.GoToJail,
         price: emptyPrice,
         rent: emptyRent,
     },
     {
         id: 31,
         name: "Lombok",
+        displayName: "LBK",
         type: PropertyType.PropertyG,
         price: { basePrice: 300, housePrice: 200, mortgagePrice: 150 },
         rent: { baseRent: 26, house1: 130, house2: 390, house3: 900, house4: 1100, hotel: 1275 },
     },
     {
         id: 32,
-        name: "Komodo",
+        name: "Ternate",
+        displayName: "TRN",
         type: PropertyType.PropertyG,
         price: { basePrice: 300, housePrice: 200, mortgagePrice: 150 },
         rent: { baseRent: 26, house1: 130, house2: 390, house3: 900, house4: 1100, hotel: 1275 },
@@ -238,6 +271,7 @@ export const board: Property[] = [
     {
         id: 33,
         name: "Dana Umum",
+        displayName: "Dana Umum",
         type: PropertyType.CommunityChest,
         price: emptyPrice,
         rent: emptyRent,
@@ -245,13 +279,15 @@ export const board: Property[] = [
     {
         id: 34,
         name: "Raja Ampat",
+        displayName: "Raja Ampat",
         type: PropertyType.PropertyG,
         price: { basePrice: 320, housePrice: 200, mortgagePrice: 160 },
         rent: { baseRent: 28, house1: 150, house2: 450, house3: 1000, house4: 1200, hotel: 1400 },
     },
     {
         id: 35,
-        name: "Stasiun Gubeng",
+        name: "Stasiun Solo Balapan",
+        displayName: "Stasiun Solo",
         type: PropertyType.Station,
         price: { basePrice: 200, housePrice: 0, mortgagePrice: 100 },
         rent: { ...emptyRent, baseRent: 25 },
@@ -259,6 +295,7 @@ export const board: Property[] = [
     {
         id: 36,
         name: "Kesempatan",
+        displayName: "?",
         type: PropertyType.Chance,
         price: emptyPrice,
         rent: emptyRent,
@@ -266,6 +303,7 @@ export const board: Property[] = [
     {
         id: 37,
         name: "Bali",
+        displayName: "Bali",
         type: PropertyType.PropertyH,
         price: { basePrice: 350, housePrice: 200, mortgagePrice: 175 },
         rent: { baseRent: 35, house1: 175, house2: 500, house3: 1100, house4: 1300, hotel: 1500 },
@@ -273,6 +311,7 @@ export const board: Property[] = [
     {
         id: 38,
         name: "Pajak",
+        displayName: "Pajak",
         type: PropertyType.Tax,
         price: emptyPrice,
         rent: { ...emptyRent, baseRent: 100 },
@@ -280,6 +319,7 @@ export const board: Property[] = [
     {
         id: 39,
         name: "Jakarta",
+        displayName: "DKI",
         type: PropertyType.PropertyH,
         price: { basePrice: 400, housePrice: 200, mortgagePrice: 200 },
         rent: { baseRent: 50, house1: 200, house2: 600, house3: 1400, house4: 1700, hotel: 2000 },

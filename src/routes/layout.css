@@ -27,7 +27,7 @@
 	}
 
 	.prop-left {
-		writing-mode: vertical-rl;
+		writing-mode: sideways-lr;
 		text-orientation: mixed;
 	}
 

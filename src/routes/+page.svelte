@@ -1,18 +1,16 @@
 <script lang="ts">
 	import Property from '$lib/components/property.svelte';
-	import { cameraTo } from '$lib/utils/camera-utils';
 	import { onMount } from 'svelte';
-	import { board } from '../lib/config/board';
-	import { currentId, rotate, zoom } from '$lib/stores/game';
+	import { boardProperties } from '../lib/config/board';
+	import { currentId } from '$lib/stores/game';
 	import DicePanel from '$lib/components/dice-panel.svelte';
 
-	const bottomRow = board.slice(0, 11).toReversed();
-	const leftRow = board.slice(11, 20).toReversed();
-	const topRow = board.slice(20, 31);
-	const rightRow = board.slice(31, 40);
+	const bottomRow = boardProperties.slice(0, 11).toReversed();
+	const leftRow = boardProperties.slice(11, 20).toReversed();
+	const topRow = boardProperties.slice(20, 31);
+	const rightRow = boardProperties.slice(31, 40);
 
 	onMount(() => {
-		cameraTo(0);
 		$currentId = 0;
 	});
 </script>
@@ -20,7 +18,10 @@
 <DicePanel />
 
 <main class="relative h-screen w-screen overflow-hidden">
-	<section id="board" class="grid-board {$rotate} {$zoom ? 'zoom-in' : 'zoom-out'}">
+	<section
+		id="board"
+		class="grid-board h-[80vh] origin-center translate-y-18 rotate-45 -skew-8 rounded-2xl border-t-2 border-r-8 border-b-8 border-l-2 border-neutral-300"
+	>
 		{#each Array.from({ length: 11 }).map((_, i) => i) as i (i)}
 			{#if i === 0}
 				{#each topRow as property (property.id)}
