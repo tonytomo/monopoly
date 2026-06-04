@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { move } from '$lib/stores/game';
+	import { move, nextTurn } from '$lib/stores/game';
 	import { fade, scale } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
 
@@ -102,6 +102,15 @@
 
 <!-- 1. The Floating Dice Panel HUD (Bottom-Left) -->
 <div class="dice-panel">
+	<!-- Test next turn -->
+	<button
+		disabled={rolling}
+		onclick={nextTurn}
+		class="cursor-pointer hover:bg-amber-500 active:bg-blue-500"
+	>
+		Next Turn
+	</button>
+
 	<!-- Minimalist Smooth Dice Tray -->
 	<button
 		disabled={rolling}

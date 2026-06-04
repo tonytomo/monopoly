@@ -1,7 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
 	import { tiles } from '../lib/config/tiles';
-	import { currentId } from '$lib/stores/game';
 	import type { BoardTile } from '$lib/types/tile';
 	import Tile from '$lib/components/tile.svelte';
 	import DetailsPanel from '$lib/components/details-panel.svelte';
@@ -12,11 +10,6 @@
 	const leftRow: BoardTile[] = tiles.slice(11, 20).toReversed();
 	const topRow: BoardTile[] = tiles.slice(20, 31);
 	const rightRow: BoardTile[] = tiles.slice(31, 40);
-
-	onMount(() => {
-		// Reset or initialize player focus
-		$currentId = 0;
-	});
 </script>
 
 <DetailsPanel />
@@ -28,7 +21,7 @@
 >
 	<section
 		id="board"
-		class="grid-board h-[80vh] origin-center rotate-45 -skew-8 rounded-2xl border-t-2 border-r-8 border-b-8 border-l-2 border-neutral-300"
+		class="grid-board h-[80vh] origin-center rotate-45 -skew-8 rounded-2xl border-t-2 border-r-8 border-b-8 border-l-2 border-neutral-200"
 	>
 		{#each Array.from({ length: 11 }, (_, i) => i) as i (i)}
 			{#if i === 0}

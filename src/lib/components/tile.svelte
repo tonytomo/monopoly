@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { activeId, currentId } from '$lib/stores/game';
+	import { activeId, currentPlayerIndex, players } from '$lib/stores/game';
 	import { ColorGroup, TileType, type BoardTile } from '$lib/types/tile';
 
 	interface Props {
@@ -9,6 +9,9 @@
 	}
 
 	let { tile, orientation, ownColor = 'bg-neutral-300' }: Props = $props();
+
+	// Player color tokens
+	let localTokens = $derived($players.filter((p) => p.position === tile.id && !p.isBankrupt));
 
 	// Map ColorGroup to modern, premium Tailwind colors
 	const colorMap: Record<ColorGroup, string> = {
@@ -100,10 +103,7 @@
 <button
 	id="s{tile.id}"
 	onclick={click}
-	class="relative flex cursor-pointer flex-col items-center justify-between border border-neutral-300 p-1 transition-all duration-200 select-none {rounded} {tileBgColor()} {$currentId ===
-	tile.id
-		? 'z-10 scale-105 shadow-xl ring-4 ring-red-500 ring-offset-2'
-		: 'hover:z-10 hover:scale-[1.02]'}"
+	class="relative flex cursor-pointer flex-col items-center justify-between border border-neutral-200 p-1 transition-all duration-200 select-none {rounded} {tileBgColor()}"
 >
 	<!-- 1. Header Bar for Street/City Properties -->
 	{#if isStreet}
@@ -182,13 +182,32 @@
 
 		<!-- Price displays -->
 		{#if isBuyable && basePrice !== null}
-			<p class="text-[0.65rem] font-black tracking-tight text-neutral-700">
+			<p class="text-[0.65rem] font-black tracking-tight text-neutral-700/50">
 				{basePrice}M
 			</p>
 		{:else if tile.type === TileType.Tax}
-			<p class="text-[0.65rem] font-black tracking-tight text-rose-700">
+			<p class="text-[0.65rem] font-black tracking-tight text-rose-700/50">
 				{tile.cost}M
 			</p>
 		{/if}
 	</div>
+
+	<!-- 3. Player Tokens Overlay -->
+	{#if localTokens.length > 0}
+		<div class="pointer-events-none absolute inset-0 z-20 grid grid-cols-2 p-3">
+			{#each localTokens as token (token.id)}
+				<div class="relative size-1">
+					<div
+						class="absolute h-2 w-4 translate-x-2 translate-y-3 -rotate-45 skew-0 rounded-[100%] bg-neutral-900/50"
+					></div>
+					<div
+						class="absolute h-8 w-4 -translate-y-2 -rotate-45 skew-0 animate-bounce rounded-full border-2 border-neutral-700 {token.color} {$currentPlayerIndex ===
+						token.id
+							? ''
+							: 'opacity-50'}"
+					></div>
+				</div>
+			{/each}
+		</div>
+	{/if}
 </button>
