@@ -1,10 +1,13 @@
 <script lang="ts">
 	import { move } from '$lib/stores/game';
+	import { fade, scale } from 'svelte/transition';
+	import { cubicOut } from 'svelte/easing';
 
 	let die1 = $state(1);
 	let die2 = $state(1);
 	let rolling = $state(false);
-	let hasRolled = $state(false);
+	let showMiddleResult = $state(false);
+	let resultTimer: ReturnType<typeof setTimeout> | null = null;
 
 	// Dice face dot positions (CSS grid based)
 	const dotPositions: Record<number, [number, number][]> = {
@@ -52,9 +55,9 @@
 	};
 
 	function getRandomSpins(): string {
-		// Add multiple full rotations for dramatic spin + land on the target face
-		const xSpins = (Math.floor(Math.random() * 3) + 2) * 360;
-		const ySpins = (Math.floor(Math.random() * 3) + 2) * 360;
+		// High-speed smooth organic rotations
+		const xSpins = (Math.floor(Math.random() * 4) + 3) * 360;
+		const ySpins = (Math.floor(Math.random() * 4) + 3) * 360;
 		return `rotateX(${xSpins}deg) rotateY(${ySpins}deg)`;
 	}
 
@@ -63,106 +66,136 @@
 
 	async function rollDice() {
 		if (rolling) return;
+
+		// Reset old middle announcement and timers if rolling again early
+		showMiddleResult = false;
+		if (resultTimer) clearTimeout(resultTimer);
+
 		rolling = true;
-		hasRolled = true;
 
 		const result1 = Math.floor(Math.random() * 6) + 1;
 		const result2 = Math.floor(Math.random() * 6) + 1;
 
-		// Set dramatic spin + final landing rotation
+		// Apply modern high-inertia spin physics
 		spin1 = `${getRandomSpins()} ${faceRotations[result1]}`;
 		spin2 = `${getRandomSpins()} ${faceRotations[result2]}`;
 
-		// Wait for animation
-		await new Promise((r) => setTimeout(r, 900));
+		// Wait for the smooth 3D transition to settle (850ms)
+		await new Promise((r) => setTimeout(r, 850));
 
 		die1 = result1;
 		die2 = result2;
 		rolling = false;
 
-		// Trigger game movement
+		// Display the middle screen overlay result
+		showMiddleResult = true;
+
+		// Auto-hide the middle overlay after 5 seconds
+		resultTimer = setTimeout(() => {
+			showMiddleResult = false;
+		}, 2000);
+
+		// Execute gameplay movement
 		await move(result1 + result2);
 	}
 </script>
 
+<!-- 1. The Floating Dice Panel HUD (Bottom-Left) -->
 <div class="dice-panel">
-	<div class="dice-tray">
-		<div class="die-scene">
-			<div class="die-cube" style="transform: {spin1}">
-				{#each [1, 2, 3, 4, 5, 6] as face, i (i)}
-					<div class="die-face face-{face}">
-						{#each dotPositions[face] as [row, col], j (j)}
-							<span class="dot" style="grid-row: {row}; grid-column: {col};"></span>
-						{/each}
-					</div>
-				{/each}
+	<!-- Minimalist Smooth Dice Tray -->
+	<button
+		disabled={rolling}
+		onclick={rollDice}
+		class={rolling ? 'cursor-not-allowed' : 'cursor-pointer'}
+	>
+		<div class="dice-tray" class:rolling>
+			<div class="die-scene">
+				<div class="die-cube" style="transform: {spin1}">
+					{#each [1, 2, 3, 4, 5, 6] as face, i (i)}
+						<div class="die-face face-{face}">
+							{#each dotPositions[face] as [row, col], j (j)}
+								<span class="dot" style="grid-row: {row}; grid-column: {col};"></span>
+							{/each}
+						</div>
+					{/each}
+				</div>
+			</div>
+
+			<div class="die-scene">
+				<div class="die-cube" style="transform: {spin2}">
+					{#each [1, 2, 3, 4, 5, 6] as face, i (i)}
+						<div class="die-face face-{face}">
+							{#each dotPositions[face] as [row, col], j (j)}
+								<span class="dot" style="grid-row: {row}; grid-column: {col};"></span>
+							{/each}
+						</div>
+					{/each}
+				</div>
 			</div>
 		</div>
-
-		<div class="die-scene">
-			<div class="die-cube" style="transform: {spin2}">
-				{#each [1, 2, 3, 4, 5, 6] as face, i (i)}
-					<div class="die-face face-{face}">
-						{#each dotPositions[face] as [row, col], j (j)}
-							<span class="dot" style="grid-row: {row}; grid-column: {col};"></span>
-						{/each}
-					</div>
-				{/each}
-			</div>
-		</div>
-	</div>
-
-	{#if hasRolled && !rolling}
-		<div class="dice-result">
-			<span class="result-total">{die1 + die2}</span>
-			{#if die1 === die2}
-				<span class="doubles-badge">Dadu Kembar!</span>
-			{/if}
-		</div>
-	{/if}
-
-	<button class="roll-btn" onclick={rollDice} disabled={rolling}>
-		{#if rolling}
-			<span class="roll-btn-text spinning-text">Melempar…</span>
-		{:else}
-			<span class="roll-btn-text">Lempar Dadu</span>
-		{/if}
 	</button>
 </div>
 
+<!-- 2. Cinematic Center-Screen Roll Result Announcement -->
+{#if showMiddleResult}
+	<!-- Full-screen click-through wrapper -->
+	<div class="pointer-events-none fixed inset-0 z-50 flex items-center justify-center">
+		<div
+			transition:scale={{ start: 0.85, duration: 350, easing: cubicOut }}
+			class="middle-result-card pointer-events-auto"
+		>
+			<span class="step-label">Langkah Berjalan</span>
+			<div class="number-display">
+				{die1 + die2}
+			</div>
+			{#if die1 === die2}
+				<div transition:fade={{ delay: 150, duration: 200 }} class="double-badge">DADU KEMBAR</div>
+			{/if}
+		</div>
+	</div>
+{/if}
+
 <style>
+	/* ---- Base Panel container ---- */
 	.dice-panel {
 		position: fixed;
 		left: 2rem;
 		bottom: 2rem;
-		z-index: 50;
+		z-index: 45;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		gap: 0.75rem;
-		padding: 1.25rem 1.5rem;
-		border-radius: 1.25rem;
-		background: rgba(255, 255, 255, 0.85);
-		border: 1px solid rgba(0, 0, 0, 0.1);
-		backdrop-filter: blur(12px);
-		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+		padding: 0.875rem;
+		border-radius: 1.5rem;
+		background: rgba(255, 255, 255, 0.8);
+		border: 2px solid #d4d4d4;
+		border-bottom: 8px solid #d4d4d4;
+		backdrop-filter: blur(16px);
+		transition: all 0.3s ease;
 	}
 
-	/* ---- Dice tray ---- */
+	/* ---- Minimalist Modern Tray ---- */
 	.dice-tray {
 		display: flex;
 		gap: 1.25rem;
-		padding: 0.75rem 1rem;
-		border-radius: 0.75rem;
-		background: rgba(0, 0, 0, 0.04);
-		border: 1px solid rgba(0, 0, 0, 0.06);
+		padding: 1rem 1.25rem;
+		border-radius: 1.125rem;
+		background: rgba(243, 244, 246, 0.6);
+		border: 1px solid rgba(229, 231, 235, 0.8);
+		transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 	}
 
-	/* ---- 3D die ---- */
+	.dice-tray.rolling {
+		transform: scale(0.95);
+		background: rgba(243, 244, 246, 0.3);
+	}
+
+	/* ---- Dice scenes ---- */
 	.die-scene {
-		width: 56px;
-		height: 56px;
-		perspective: 300px;
+		width: 46px;
+		height: 46px;
+		perspective: 250px;
 	}
 
 	.die-cube {
@@ -170,137 +203,106 @@
 		height: 100%;
 		position: relative;
 		transform-style: preserve-3d;
-		transition: transform 0.85s cubic-bezier(0.22, 1, 0.36, 1);
+		transition: transform 0.85s cubic-bezier(0.25, 1, 0.5, 1);
 	}
 
 	.die-face {
 		position: absolute;
-		width: 56px;
-		height: 56px;
+		width: 46px;
+		height: 46px;
 		display: grid;
 		grid-template-rows: repeat(3, 1fr);
 		grid-template-columns: repeat(3, 1fr);
 		place-items: center;
-		border-radius: 10px;
-		background: linear-gradient(145deg, #ffffff, #e8e8e8);
-		border: 2px solid rgba(0, 0, 0, 0.08);
+		border-radius: 12px;
+		background: #ffffff;
+		border: 1px solid rgba(229, 231, 235, 0.8);
 		box-shadow:
-			inset 0 2px 4px rgba(255, 255, 255, 0.8),
-			inset 0 -1px 2px rgba(0, 0, 0, 0.05);
+			inset 0 -2px 4px rgba(0, 0, 0, 0.02),
+			0 3px 6px rgba(0, 0, 0, 0.03);
 		backface-visibility: hidden;
 	}
 
+	/* High elegance minimalist circular dots */
 	.dot {
-		width: 10px;
-		height: 10px;
+		width: 7.5px;
+		height: 7.5px;
 		border-radius: 50%;
-		background: radial-gradient(circle at 35% 35%, #4a4a4a, #1a1a1a);
-		box-shadow:
-			inset 0 1px 2px rgba(0, 0, 0, 0.4),
-			0 1px 1px rgba(255, 255, 255, 0.3);
+		background: #1f2937; /* Clean Charcoal Gray */
 	}
 
-	/* Face positioning in 3D */
+	/* Center dot of face 1 gets an elegant corporate blue/indigo focus */
+	.face-1 .dot {
+		background: #4f46e5;
+		width: 9px;
+		height: 9px;
+	}
+
+	/* Precise Z-Offset mappings (Z = size/2 = 23px) */
 	.face-1 {
-		transform: rotateY(0deg) translateZ(28px);
+		transform: rotateY(0deg) translateZ(23px);
 	}
 	.face-2 {
-		transform: rotateX(90deg) translateZ(28px);
+		transform: rotateX(90deg) translateZ(23px);
 	}
 	.face-3 {
-		transform: rotateY(-90deg) translateZ(28px);
+		transform: rotateY(-90deg) translateZ(23px);
 	}
 	.face-4 {
-		transform: rotateY(90deg) translateZ(28px);
+		transform: rotateY(90deg) translateZ(23px);
 	}
 	.face-5 {
-		transform: rotateX(-90deg) translateZ(28px);
+		transform: rotateX(-90deg) translateZ(23px);
 	}
 	.face-6 {
-		transform: rotateX(180deg) translateZ(28px);
+		transform: rotateX(180deg) translateZ(23px);
 	}
 
-	/* ---- Result display ---- */
-	.dice-result {
+	/* ---- Center-Screen Overlay ---- */
+	.middle-result-card {
 		display: flex;
+		flex-direction: column;
 		align-items: center;
-		gap: 0.5rem;
+		justify-content: center;
+		gap: 0.25rem;
+		padding: 1.75rem 2.5rem;
+		border-radius: 2rem;
+		background: white;
+		border: 2px solid #d4d4d4;
+		border-bottom: 8px solid #d4d4d4;
+		text-align: center;
+		min-width: 220px;
 	}
 
-	.result-total {
-		font-size: 1.5rem;
-		font-weight: 800;
-		color: #334155;
-		letter-spacing: -0.025em;
-	}
-
-	.doubles-badge {
+	.step-label {
 		font-size: 0.65rem;
-		font-weight: 700;
+		font-weight: 800;
 		text-transform: uppercase;
-		letter-spacing: 0.08em;
-		padding: 0.2rem 0.5rem;
+		letter-spacing: 0.15em;
+		color: #6366f1;
+	}
+
+	.number-display {
+		font-size: 5rem;
+		font-weight: 900;
+		line-height: 1;
+		letter-spacing: -0.05em;
+		background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+		background-clip: text;
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		min-width: 100%;
+		text-align: center;
+	}
+
+	.double-badge {
+		margin-top: 0.5rem;
+		font-size: 0.6rem;
+		font-weight: 800;
+		color: #4f46e5;
+		background: #e0e7ff;
+		padding: 0.25rem 0.625rem;
 		border-radius: 999px;
-		background: linear-gradient(135deg, #f59e0b, #d97706);
-		color: #1c1917;
-		animation: badge-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-	}
-
-	@keyframes badge-pop {
-		0% {
-			transform: scale(0);
-			opacity: 0;
-		}
-		100% {
-			transform: scale(1);
-			opacity: 1;
-		}
-	}
-
-	/* ---- Roll button ---- */
-	.roll-btn {
-		width: 100%;
-		padding: 0.6rem 1rem;
-		border: 1px solid rgba(0, 0, 0, 0.1);
-		border-radius: 0.75rem;
-		cursor: pointer;
-		font-size: 0.85rem;
-		font-weight: 700;
-		background: #334155;
-		color: #fff;
-		letter-spacing: 0.01em;
-		transition: all 0.15s ease;
-	}
-
-	.roll-btn:hover:not(:disabled) {
-		background: #1e293b;
-	}
-
-	.roll-btn:active:not(:disabled) {
-		background: #0f172a;
-	}
-
-	.roll-btn:disabled {
-		opacity: 0.7;
-		cursor: not-allowed;
-	}
-
-	.roll-btn-text {
-		position: relative;
-		z-index: 1;
-	}
-
-	.spinning-text {
-		display: inline-block;
-		animation: pulse-text 0.6s ease-in-out infinite alternate;
-	}
-
-	@keyframes pulse-text {
-		0% {
-			opacity: 0.6;
-		}
-		100% {
-			opacity: 1;
-		}
+		letter-spacing: 0.05em;
 	}
 </style>

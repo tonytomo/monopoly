@@ -1,5 +1,9 @@
 @import 'tailwindcss';
 
+@theme {
+	--default-font-family: 'Nunito', sans-serif;
+}
+
 @layer base {
 	html {
 		scroll-behavior: smooth;
@@ -34,5 +38,9 @@
 	.prop-right {
 		writing-mode: sideways-lr;
 		text-orientation: mixed;
+	}
+
+	.inner-deck {
+		pointer-events: none;
 	}
 }

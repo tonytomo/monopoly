@@ -1,17 +1,20 @@
 <script lang="ts">
-	import Property from '$lib/components/property.svelte';
 	import { onMount } from 'svelte';
-	import { boardProperties } from '../lib/config/board';
+	import { tiles } from '../lib/config/tiles';
 	import { currentId } from '$lib/stores/game';
-	import DicePanel from '$lib/components/dice-panel.svelte';
+	import type { BoardTile } from '$lib/types/tile';
+	import Tile from '$lib/components/tile.svelte';
 	import DetailsPanel from '$lib/components/details-panel.svelte';
+	import DicePanel from '$lib/components/dice-panel.svelte';
 
-	const bottomRow = boardProperties.slice(0, 11).toReversed();
-	const leftRow = boardProperties.slice(11, 20).toReversed();
-	const topRow = boardProperties.slice(20, 31);
-	const rightRow = boardProperties.slice(31, 40);
+	// Typed slices from the unified static board config
+	const bottomRow: BoardTile[] = tiles.slice(0, 11).toReversed();
+	const leftRow: BoardTile[] = tiles.slice(11, 20).toReversed();
+	const topRow: BoardTile[] = tiles.slice(20, 31);
+	const rightRow: BoardTile[] = tiles.slice(31, 40);
 
 	onMount(() => {
+		// Reset or initialize player focus
 		$currentId = 0;
 	});
 </script>
@@ -20,38 +23,44 @@
 
 <DicePanel />
 
-<main class="relative h-screen w-screen overflow-hidden">
+<main
+	class="relative flex h-screen w-screen items-center justify-center overflow-hidden bg-neutral-100"
+>
 	<section
 		id="board"
-		class="grid-board h-[80vh] origin-center translate-y-18 rotate-45 -skew-8 rounded-2xl border-t-2 border-r-8 border-b-8 border-l-2 border-neutral-300"
+		class="grid-board h-[80vh] origin-center rotate-45 -skew-8 rounded-2xl border-t-2 border-r-8 border-b-8 border-l-2 border-neutral-300"
 	>
-		{#each Array.from({ length: 11 }).map((_, i) => i) as i (i)}
+		{#each Array.from({ length: 11 }, (_, i) => i) as i (i)}
 			{#if i === 0}
-				{#each topRow as property (property.id)}
-					{#if property.id === 20}
-						<Property {property} orientation="tl" />
-					{:else if property.id === 30}
-						<Property {property} orientation="tr" />
+				<!-- Top Row (Left to Right: Free Parking to Go To Jail) -->
+				{#each topRow as tile (tile.id)}
+					{#if tile.id === 20}
+						<Tile {tile} orientation="tl" />
+					{:else if tile.id === 30}
+						<Tile {tile} orientation="tr" />
 					{:else}
-						<Property {property} orientation="t" />
+						<Tile {tile} orientation="t" />
 					{/if}
 				{/each}
 			{:else if i === 10}
-				{#each bottomRow as property (property.id)}
-					{#if property.id === 0}
-						<Property {property} orientation="br" />
-					{:else if property.id === 10}
-						<Property {property} orientation="bl" />
+				<!-- Bottom Row (Left to Right: Jail to Mulai/GO) -->
+				{#each bottomRow as tile (tile.id)}
+					{#if tile.id === 0}
+						<Tile {tile} orientation="br" />
+					{:else if tile.id === 10}
+						<Tile {tile} orientation="bl" />
 					{:else}
-						<Property {property} orientation="b" />
+						<Tile {tile} orientation="b" />
 					{/if}
 				{/each}
 			{:else}
-				<Property property={leftRow[i - 1]} orientation="l" />
-				{#each Array.from({ length: 9 }).map((_, j) => j) as j (j)}
-					<div></div>
+				<!-- Middle Rows: Left Column, 9 Empty Spaces, Right Column -->
+				<Tile tile={leftRow[i - 1]} orientation="l" />
+				<!-- eslint-disable-next-line @typescript-eslint/no-unused-vars -->
+				{#each Array.from({ length: 9 }) as _, j (j)}
+					<div class="inner-deck bg-neutral-100"></div>
 				{/each}
-				<Property property={rightRow[i - 1]} orientation="r" />
+				<Tile tile={rightRow[i - 1]} orientation="r" />
 			{/if}
 		{/each}
 	</section>
