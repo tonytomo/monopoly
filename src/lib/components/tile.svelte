@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { activeId, currentPlayerIndex, players } from '$lib/stores/game';
+	import { currentPlayerIndex, players } from '$lib/stores/game';
 	import { ColorGroup, TileType, type BoardTile } from '$lib/types/tile';
 
 	interface Props {
@@ -95,7 +95,7 @@
 	const rounded = $derived(roundedCorners[orientation] || '');
 
 	function click() {
-		$activeId = tile.id;
+		console.log('Tile clicked:', tile);
 	}
 </script>
 

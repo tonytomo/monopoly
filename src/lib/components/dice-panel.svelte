@@ -161,7 +161,7 @@
 		position: fixed;
 		left: 2rem;
 		bottom: 2rem;
-		z-index: 45;
+		z-index: 30;
 		display: flex;
 		flex-direction: column;
 		align-items: center;

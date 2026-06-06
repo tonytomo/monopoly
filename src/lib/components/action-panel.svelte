@@ -1,5 +1,12 @@
 <script lang="ts">
-	import { activeId } from '$lib/stores/game';
+	import {
+		activeId,
+		ownership,
+		players,
+		currentPlayerIndex,
+		buyProperty,
+		finishTurn
+	} from '$lib/stores/game';
 	import { TileType, ColorGroup } from '$lib/types/tile';
 	import { fly, fade } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
@@ -9,8 +16,43 @@
 	let tile = $derived($activeId >= 0 ? tiles[$activeId] : null);
 	let isOpen = $derived($activeId >= 0);
 
+	// Ownership state for the active tile
+	let ownerId = $derived(tile ? $ownership.get(tile.id) : undefined);
+	let ownerPlayer = $derived(
+		ownerId !== undefined ? $players.find((p) => p.id === ownerId) : undefined
+	);
+	let currentPlayer = $derived($players[$currentPlayerIndex]);
+	let isPurchasable = $derived(
+		tile?.type === TileType.Street ||
+			tile?.type === TileType.Railroad ||
+			tile?.type === TileType.Utility
+	);
+	let isUnowned = $derived(isPurchasable && ownerId === undefined);
+	let isOwnedBySelf = $derived(isPurchasable && ownerId === currentPlayer?.id);
+	let isOwnedByOther = $derived(
+		isPurchasable && ownerId !== undefined && ownerId !== currentPlayer?.id
+	);
+	let canAfford = $derived(
+		isUnowned &&
+			tile &&
+			isPurchasable &&
+			'price' in tile &&
+			currentPlayer &&
+			currentPlayer.money >= tile.price.base
+	);
+	let isStandingOnTile = $derived(
+		tile && currentPlayer ? currentPlayer.position === tile.id : false
+	);
+
 	function close() {
 		$activeId = -1;
+		finishTurn();
+	}
+
+	function handleBuy() {
+		if (tile && isUnowned && canAfford && isStandingOnTile) {
+			buyProperty(tile.id);
+		}
 	}
 
 	// Map ColorGroup to authentic, vibrant card header colors
@@ -23,6 +65,14 @@
 		[ColorGroup.Yellow]: 'bg-yellow-400 text-neutral-950 border-yellow-500',
 		[ColorGroup.Green]: 'bg-emerald-600 text-white border-emerald-700',
 		[ColorGroup.DarkBlue]: 'bg-blue-800 text-white border-blue-900'
+	};
+
+	// Map player color tokens to hex for the ownership indicator
+	const playerColorHex: Record<string, string> = {
+		'bg-red-500': '#ef4444',
+		'bg-blue-500': '#3b82f6',
+		'bg-yellow-500': '#eab308',
+		'bg-green-500': '#22c55e'
 	};
 
 	function getTypeName(type: TileType): string {
@@ -43,12 +93,9 @@
 
 {#if isOpen && tile}
 	<!-- Backdrop -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
 	<div
 		transition:fade={{ duration: 200, easing: cubicOut }}
-		class="fixed inset-0 z-40 bg-neutral-950/60 backdrop-blur-sm"
-		onclick={close}
+		class="pointer-events-none fixed inset-0 z-40 bg-neutral-950/60 backdrop-blur-sm"
 	></div>
 
 	<!-- Panel Sidebar Container -->
@@ -71,6 +118,36 @@
 				✕
 			</button>
 		</div>
+
+		<!-- Ownership Status Banner -->
+		{#if isPurchasable}
+			<div class="border-b border-neutral-800 px-6 py-3">
+				{#if isUnowned}
+					<div class="flex items-center gap-2">
+						<span class="ownership-dot ownership-dot--unowned"></span>
+						<span class="text-xs font-bold text-neutral-400">Belum dimiliki</span>
+					</div>
+				{:else if ownerPlayer}
+					<div class="flex items-center gap-2">
+						<span
+							class="ownership-dot"
+							style="background: {playerColorHex[ownerPlayer.color] ??
+								'#9ca3af'}; box-shadow: 0 0 6px {playerColorHex[ownerPlayer.color] ?? '#9ca3af'};"
+						></span>
+						<span class="text-xs font-bold text-neutral-200">
+							Milik <span class="text-white">{ownerPlayer.name}</span>
+						</span>
+						{#if isOwnedBySelf}
+							<span
+								class="ml-auto rounded-full bg-emerald-500/15 px-2 py-0.5 text-[0.6rem] font-extrabold text-emerald-400"
+							>
+								MILIKMU
+							</span>
+						{/if}
+					</div>
+				{/if}
+			</div>
+		{/if}
 
 		<!-- Panel Body & Deed Card Presentation -->
 		<div
@@ -272,13 +349,39 @@
 		</div>
 
 		<!-- Sidebar Actions Panel Footer -->
-		{#if tile.type === TileType.Street || tile.type === TileType.Railroad || tile.type === TileType.Utility}
-			<div
-				class="border-t border-neutral-800 bg-neutral-900/60 p-4 text-center font-mono text-[0.7rem] text-neutral-400"
-			>
-				Harga Pembelian Properti: <span class="text-sm font-extrabold text-emerald-400"
-					>{tile.price.base}M</span
-				>
+		{#if isPurchasable}
+			<div class="border-t border-neutral-800 bg-neutral-900/60 p-4">
+				{#if isUnowned && isStandingOnTile}
+					<!-- Buy button — only when player is standing on this unowned tile -->
+					<button
+						onclick={handleBuy}
+						disabled={!canAfford}
+						class="buy-btn w-full rounded-xl py-3 text-sm font-extrabold tracking-wide uppercase transition-all
+							{canAfford
+							? 'cursor-pointer bg-emerald-500 text-white shadow-lg shadow-emerald-500/25 hover:bg-emerald-400 hover:shadow-emerald-400/30 active:scale-[0.98]'
+							: 'cursor-not-allowed bg-neutral-800 text-neutral-500'}"
+					>
+						{#if canAfford && 'price' in tile}
+							Beli — {tile.price.base}M
+						{:else}
+							Uang tidak cukup
+						{/if}
+					</button>
+				{:else if isUnowned && !isStandingOnTile}
+					<div class="text-center font-mono text-[0.7rem] text-neutral-400">
+						Harga Pembelian Properti: <span class="text-sm font-extrabold text-emerald-400"
+							>{'price' in tile ? tile.price.base : 0}M</span
+						>
+					</div>
+				{:else if isOwnedBySelf}
+					<div class="text-center font-mono text-[0.7rem] text-emerald-400">
+						✓ Kamu memiliki properti ini
+					</div>
+				{:else if isOwnedByOther && ownerPlayer}
+					<div class="text-center font-mono text-[0.7rem] text-red-400">
+						⚠ Sewa dibayar ke {ownerPlayer.name}
+					</div>
+				{/if}
 			</div>
 		{/if}
 	</aside>
@@ -289,5 +392,34 @@
 	.double-border {
 		border-style: double;
 		border-width: 6px;
+	}
+
+	/* Ownership indicator dot */
+	.ownership-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		flex-shrink: 0;
+		transition: all 0.3s ease;
+	}
+
+	.ownership-dot--unowned {
+		background: #525252;
+		border: 2px dashed #737373;
+	}
+
+	/* Buy button pulse animation */
+	.buy-btn:not(:disabled) {
+		animation: buy-pulse 2s ease-in-out infinite;
+	}
+
+	@keyframes buy-pulse {
+		0%,
+		100% {
+			box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+		}
+		50% {
+			box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+		}
 	}
 </style>

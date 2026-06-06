@@ -2,9 +2,9 @@
 	import { tiles } from '../lib/config/tiles';
 	import type { BoardTile } from '$lib/types/tile';
 	import Tile from '$lib/components/tile.svelte';
-	import DetailsPanel from '$lib/components/details-panel.svelte';
 	import DicePanel from '$lib/components/dice-panel.svelte';
 	import Hud from '$lib/components/hud.svelte';
+	import ActionPanel from '$lib/components/action-panel.svelte';
 
 	// Typed slices from the unified static board config
 	const bottomRow: BoardTile[] = tiles.slice(0, 11).toReversed();
@@ -13,7 +13,7 @@
 	const rightRow: BoardTile[] = tiles.slice(31, 40);
 </script>
 
-<DetailsPanel />
+<ActionPanel />
 
 <DicePanel />
 
