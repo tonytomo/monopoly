@@ -95,7 +95,7 @@
 	<!-- Backdrop -->
 	<div
 		transition:fade={{ duration: 200, easing: cubicOut }}
-		class="pointer-events-none fixed inset-0 z-40 bg-neutral-950/60 backdrop-blur-sm"
+		class="fixed inset-0 z-40 bg-neutral-950/60 backdrop-blur-sm"
 	></div>
 
 	<!-- Panel Sidebar Container -->

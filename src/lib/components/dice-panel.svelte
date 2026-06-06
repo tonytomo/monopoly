@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { handleRoll } from '$lib/stores/game';
-	import { fade, scale } from 'svelte/transition';
+	import { handleRoll, isMoving } from '$lib/stores/game';
+	import { fade, fly, scale } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
 
 	let die1 = $state(1);
@@ -101,40 +101,46 @@
 </script>
 
 <!-- 1. The Floating Dice Panel HUD (Bottom-Left) -->
-<div class="dice-panel">
-	<!-- Minimalist Smooth Dice Tray -->
-	<button
-		disabled={rolling}
-		onclick={rollDice}
-		class={rolling ? 'cursor-not-allowed' : 'cursor-pointer'}
+{#if !$isMoving}
+	<div
+		class="dice-panel"
+		in:fly={{ y: 50, duration: 200, easing: cubicOut }}
+		out:fly={{ y: 50, duration: 200, easing: cubicOut }}
 	>
-		<div class="dice-tray" class:rolling>
-			<div class="die-scene">
-				<div class="die-cube" style="transform: {spin1}">
-					{#each [1, 2, 3, 4, 5, 6] as face, i (i)}
-						<div class="die-face face-{face}">
-							{#each dotPositions[face] as [row, col], j (j)}
-								<span class="dot" style="grid-row: {row}; grid-column: {col};"></span>
-							{/each}
-						</div>
-					{/each}
+		<!-- Minimalist Smooth Dice Tray -->
+		<button
+			disabled={rolling}
+			onclick={rollDice}
+			class={rolling ? 'cursor-not-allowed' : 'cursor-pointer'}
+		>
+			<div class="dice-tray" class:rolling>
+				<div class="die-scene">
+					<div class="die-cube" style="transform: {spin1}">
+						{#each [1, 2, 3, 4, 5, 6] as face, i (i)}
+							<div class="die-face face-{face}">
+								{#each dotPositions[face] as [row, col], j (j)}
+									<span class="dot" style="grid-row: {row}; grid-column: {col};"></span>
+								{/each}
+							</div>
+						{/each}
+					</div>
 				</div>
-			</div>
 
-			<div class="die-scene">
-				<div class="die-cube" style="transform: {spin2}">
-					{#each [1, 2, 3, 4, 5, 6] as face, i (i)}
-						<div class="die-face face-{face}">
-							{#each dotPositions[face] as [row, col], j (j)}
-								<span class="dot" style="grid-row: {row}; grid-column: {col};"></span>
-							{/each}
-						</div>
-					{/each}
+				<div class="die-scene">
+					<div class="die-cube" style="transform: {spin2}">
+						{#each [1, 2, 3, 4, 5, 6] as face, i (i)}
+							<div class="die-face face-{face}">
+								{#each dotPositions[face] as [row, col], j (j)}
+									<span class="dot" style="grid-row: {row}; grid-column: {col};"></span>
+								{/each}
+							</div>
+						{/each}
+					</div>
 				</div>
 			</div>
-		</div>
-	</button>
-</div>
+		</button>
+	</div>
+{/if}
 
 <!-- 2. Cinematic Center-Screen Roll Result Announcement -->
 {#if showMiddleResult}
