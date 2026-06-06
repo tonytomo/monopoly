@@ -5,6 +5,7 @@
 	import DicePanel from '$lib/components/dice-panel.svelte';
 	import Hud from '$lib/components/hud.svelte';
 	import ActionPanel from '$lib/components/action-panel.svelte';
+	import CardOverlay from '$lib/components/card-overlay.svelte';
 
 	// Typed slices from the unified static board config
 	const bottomRow: BoardTile[] = tiles.slice(0, 11).toReversed();
@@ -14,6 +15,7 @@
 </script>
 
 <ActionPanel />
+<CardOverlay />
 
 <DicePanel />
 

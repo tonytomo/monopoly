@@ -71,4 +71,28 @@ export interface UtilityTile extends BaseTile {
     multipliers: [number, number]; // [1 owned, 2 owned] (e.g., 4x, 10x dice)
 }
 
+/** The effect type each card can trigger */
+export type CardActionType =
+    | 'collect'                     // Receive money from bank
+    | 'pay'                         // Pay money to bank
+    | 'pay_each_player'             // Pay every other player a fixed amount
+    | 'collect_each_player'         // Collect a fixed amount from every other player
+    | 'move_to'                     // Move to a specific tile position
+    | 'move_back'                   // Move backwards N spaces
+    | 'go_to_jail'                  // Sent directly to jail
+    | 'advance_to_nearest_railroad' // Advance to nearest railroad, pay 2x rent
+    | 'advance_to_nearest_utility'  // Advance to nearest utility, pay 10x dice
+    | 'repairs';                    // Pay per house/hotel (flat fee for now)
+
+export interface ActionCard {
+    id: number;
+    deck: 'CHANCE' | 'COMMUNITY_CHEST';
+    title: string;
+    description: string;
+    action: CardActionType;
+    value?: number;       // Amount for collect/pay, or tile position for move_to
+    perHouse?: number;    // For 'repairs' action (future)
+    perHotel?: number;    // For 'repairs' action (future)
+}
+
 export type BoardTile = StreetTile | RailroadTile | UtilityTile | TaxTile | ActionTile;

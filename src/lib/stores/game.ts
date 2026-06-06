@@ -1,6 +1,7 @@
 import type { Player } from '$lib/types/player';
-import { TileType, type BoardTile, type StreetTile, type RailroadTile, type UtilityTile } from '$lib/types/tile';
+import { TileType, type BoardTile, type StreetTile, type RailroadTile, type UtilityTile, type ActionCard, type ActionTile } from '$lib/types/tile';
 import { tiles } from '$lib/config/tiles';
+import { chanceCards, communityChestCards } from '$lib/config/actions';
 import { writable, get } from 'svelte/store';
 
 // Global active UI panel inspectors
@@ -30,6 +31,30 @@ export const lastDiceTotal = writable<number>(0);
 // waits until the player closes the panel (after buying or declining)
 export const pendingNextTurn = writable<boolean>(false);
 
+// Card deck state — shuffled arrays of card IDs, drawn from front
+export const chanceDeck = writable<number[]>([]);
+export const communityChestDeck = writable<number[]>([]);
+export const drawnCard = writable<ActionCard | null>(null);
+
+/** Fisher-Yates shuffle — returns a new shuffled copy */
+function shuffle(arr: number[]): number[] {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+}
+
+/** Initialise both card decks with shuffled order. Call once at game start. */
+export function initDecks() {
+    chanceDeck.set(shuffle(chanceCards.map((c) => c.id)));
+    communityChestDeck.set(shuffle(communityChestCards.map((c) => c.id)));
+}
+
+// Auto-init decks on module load
+initDecks();
+
 /**
  * Core dice roll handler — enforces doubles, triple-doubles-to-jail, and auto-advance rules.
  * Called by the dice panel after the animation settles.
@@ -55,9 +80,9 @@ export async function handleRoll(die1: number, die2: number) {
     await move(die1 + die2);
 
     // Non-double → end turn and advance to next player
-    // But if the details panel opened (purchasable tile), defer until the panel closes
+    // But if a UI overlay is open (purchasable tile or drawn card), defer until it closes
     if (!isDouble) {
-        if (get(activeId) >= 0) {
+        if (get(activeId) >= 0 || get(drawnCard) !== null) {
             pendingNextTurn.set(true);
         } else {
             nextTurn();
@@ -243,6 +268,218 @@ export function calculateRent(tile: BoardTile, ownerId: number): number {
 }
 
 /**
+ * Draws a card from the specified deck, sets drawnCard for the UI overlay.
+ */
+export function drawCard(deckType: 'CHANCE' | 'COMMUNITY_CHEST') {
+    const deckStore = deckType === 'CHANCE' ? chanceDeck : communityChestDeck;
+    const cardList = deckType === 'CHANCE' ? chanceCards : communityChestCards;
+
+    let deck = get(deckStore);
+
+    // Reshuffle if deck is exhausted
+    if (deck.length === 0) {
+        deck = shuffle(cardList.map((c) => c.id));
+        deckStore.set(deck);
+    }
+
+    // Draw from front
+    const cardId = deck[0];
+    deckStore.update((d) => d.slice(1));
+
+    const card = cardList.find((c) => c.id === cardId);
+    if (card) {
+        drawnCard.set(card);
+    }
+}
+
+/**
+ * Executes the effect of a drawn card on the current player.
+ */
+export async function executeCardEffect(card: ActionCard) {
+    const playerIdx = get(currentPlayerIndex);
+    const playerList = get(players);
+    const player = playerList[playerIdx];
+
+    switch (card.action) {
+        case 'collect':
+            players.update((all) => {
+                all[playerIdx].money += card.value ?? 0;
+                return all;
+            });
+            break;
+
+        case 'pay':
+            players.update((all) => {
+                all[playerIdx].money -= card.value ?? 0;
+                return all;
+            });
+            break;
+
+        case 'pay_each_player': {
+            const amount = card.value ?? 0;
+            players.update((all) => {
+                for (let i = 0; i < all.length; i++) {
+                    if (i === playerIdx || all[i].isBankrupt) continue;
+                    all[playerIdx].money -= amount;
+                    all[i].money += amount;
+                }
+                return all;
+            });
+            break;
+        }
+
+        case 'collect_each_player': {
+            const amount = card.value ?? 0;
+            players.update((all) => {
+                for (let i = 0; i < all.length; i++) {
+                    if (i === playerIdx || all[i].isBankrupt) continue;
+                    all[i].money -= amount;
+                    all[playerIdx].money += amount;
+                }
+                return all;
+            });
+            break;
+        }
+
+        case 'move_to': {
+            const target = card.value ?? 0;
+            const currentPos = player.position;
+
+            // Calculate forward steps (wrapping around the 40-tile board)
+            let steps: number;
+            if (target > currentPos) {
+                steps = target - currentPos;
+            } else {
+                steps = 40 - currentPos + target;
+            }
+
+            await move(steps);
+            break;
+        }
+
+        case 'move_back': {
+            const steps = card.value ?? 0;
+            players.update((all) => {
+                const pos = all[playerIdx].position;
+                all[playerIdx].position = (pos - steps + 40) % 40;
+                return all;
+            });
+            // Evaluate the tile we moved back to
+            handleTileLanding(get(players)[playerIdx]);
+            break;
+        }
+
+        case 'go_to_jail':
+            goToJail(playerIdx);
+            break;
+
+        case 'advance_to_nearest_railroad': {
+            const railroadPositions = [5, 15, 25, 35];
+            const currentPos = player.position;
+            const nearest = railroadPositions.find((p) => p > currentPos) ?? railroadPositions[0];
+
+            let steps: number;
+            if (nearest > currentPos) {
+                steps = nearest - currentPos;
+            } else {
+                steps = 40 - currentPos + nearest;
+            }
+
+            await move(steps);
+
+            // If owned by another player, pay 2x rent
+            const rrTile = tiles[nearest];
+            const ownerMap = get(ownership);
+            const rrOwner = ownerMap.get(nearest);
+            if (rrOwner !== undefined && rrOwner !== player.id && rrTile.type === TileType.Railroad) {
+                const baseRent = calculateRent(rrTile, rrOwner);
+                const doubleRent = baseRent * 2;
+                const pIdx = get(players).findIndex((p) => p.id === player.id);
+                const rIdx = get(players).findIndex((p) => p.id === rrOwner);
+                if (pIdx !== -1 && rIdx !== -1) {
+                    players.update((all) => {
+                        all[pIdx].money -= doubleRent;
+                        all[rIdx].money += doubleRent;
+                        return all;
+                    });
+                }
+            }
+            break;
+        }
+
+        case 'advance_to_nearest_utility': {
+            const utilityPositions = [12, 28];
+            const currentPos = player.position;
+            const nearest = utilityPositions.find((p) => p > currentPos) ?? utilityPositions[0];
+
+            let steps: number;
+            if (nearest > currentPos) {
+                steps = nearest - currentPos;
+            } else {
+                steps = 40 - currentPos + nearest;
+            }
+
+            await move(steps);
+
+            // If owned by another player, pay 10x dice roll
+            const utilTile = tiles[nearest];
+            const uOwnerMap = get(ownership);
+            const uOwner = uOwnerMap.get(nearest);
+            if (uOwner !== undefined && uOwner !== player.id && utilTile.type === TileType.Utility) {
+                const diceTotal = get(lastDiceTotal);
+                const utilityRent = 10 * diceTotal;
+                const pIdx = get(players).findIndex((p) => p.id === player.id);
+                const rIdx = get(players).findIndex((p) => p.id === uOwner);
+                if (pIdx !== -1 && rIdx !== -1) {
+                    players.update((all) => {
+                        all[pIdx].money -= utilityRent;
+                        all[rIdx].money += utilityRent;
+                        return all;
+                    });
+                }
+            }
+            break;
+        }
+
+        case 'repairs':
+            // Flat fee for now — no houses/hotels implemented yet
+            players.update((all) => {
+                all[playerIdx].money -= card.value ?? 0;
+                return all;
+            });
+            break;
+    }
+}
+
+/**
+ * Dismisses the drawn card overlay and resumes turn flow.
+ */
+export async function dismissCard() {
+    const card = get(drawnCard);
+    if (!card) return;
+
+    // Clear the drawn card first so the overlay closes
+    drawnCard.set(null);
+
+    // Execute the card effect (may involve animated movement)
+    await executeCardEffect(card);
+
+    // If the card effect opened the action panel (e.g. moved player to an
+    // unowned purchasable tile), keep pendingNextTurn deferred — finishTurn()
+    // will handle turn advancement when the player closes that panel.
+    if (get(activeId) >= 0) {
+        return;
+    }
+
+    // Otherwise resume turn via the deferred-turn mechanism set by handleRoll
+    if (get(pendingNextTurn)) {
+        pendingNextTurn.set(false);
+        nextTurn();
+    }
+    // If doubles, pendingNextTurn was never set — player rolls again
+}
+
+/**
  * Triggers the financial or card events mapped to the final landed board coordinate
  */
 function handleTileLanding(player: Player) {
@@ -254,6 +491,19 @@ function handleTileLanding(player: Player) {
         const idx = get(players).findIndex((p) => p.id === player.id);
         if (idx !== -1) goToJail(idx);
         return;
+    }
+
+    // Chance / Community Chest tiles — draw a card
+    if (tile?.type === TileType.Action) {
+        const actionTile = tile as ActionTile;
+        if (actionTile.actionType === 'CHANCE') {
+            drawCard('CHANCE');
+            return;
+        }
+        if (actionTile.actionType === 'COMMUNITY_CHEST') {
+            drawCard('COMMUNITY_CHEST');
+            return;
+        }
     }
 
     // Tax tile — auto-deduct
