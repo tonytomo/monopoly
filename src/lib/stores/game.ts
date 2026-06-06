@@ -24,6 +24,9 @@ export const doublesCount = writable<number>(0);
 // Property ownership — maps tile ID to owner player ID (-1 or absent = unowned)
 export const ownership = writable<Map<number, number>>(new Map());
 
+// Buildings — maps tile ID to number of buildings (0 = none, 1-4 = houses, 5 = hotel)
+export const buildings = writable<Map<number, number>>(new Map());
+
 // Last dice total — needed for utility rent calculation (multiplier × dice)
 export const lastDiceTotal = writable<number>(0);
 
@@ -54,6 +57,24 @@ export function initDecks() {
 
 // Auto-init decks on module load
 initDecks();
+
+// ===== TEST CODE — REMOVE BEFORE PRODUCTION =====
+// Gives player 0 ownership of all purchasable properties for testing buildings
+{
+    const testOwnership = new Map<number, number>();
+    const testBuildings = new Map<number, number>();
+    for (const t of tiles) {
+        if (t.type === TileType.Street || t.type === TileType.Railroad || t.type === TileType.Utility) {
+            testOwnership.set(t.id, 0);
+        }
+        if (t.type === TileType.Street) {
+            testBuildings.set(t.id, 4);
+        }
+    }
+    ownership.set(testOwnership);
+    buildings.set(testBuildings);
+}
+// ===== END TEST CODE =====
 
 /**
  * Core dice roll handler — enforces doubles, triple-doubles-to-jail, and auto-advance rules.
@@ -223,6 +244,77 @@ export function buyProperty(tileId: number) {
 }
 
 /**
+ * Checks whether the given owner holds all street tiles in the same color group.
+ */
+export function hasMonopoly(tileId: number, ownerId: number): boolean {
+    const tile = tiles[tileId];
+    if (!tile || tile.type !== TileType.Street) return false;
+
+    const ownerMap = get(ownership);
+    const groupTiles = tiles.filter(
+        (t) => t.type === TileType.Street && (t as StreetTile).color === (tile as StreetTile).color
+    );
+    return groupTiles.every((t) => ownerMap.get(t.id) === ownerId);
+}
+
+/**
+ * Purchases a house or hotel on the given street tile.
+ * Rules enforced:
+ *  - Tile must be a Street owned by the current player
+ *  - Player must own the full color group (monopoly)
+ *  - Max 5 buildings (4 houses → 1 hotel upgrade replaces them)
+ *  - Even building rule: cannot build on a tile if another tile in the group
+ *    has fewer buildings (must build evenly across the group)
+ *  - Player must be able to afford the house price
+ */
+export function buyBuilding(tileId: number): boolean {
+    const tile = tiles[tileId];
+    if (!tile || tile.type !== TileType.Street) return false;
+
+    const street = tile as StreetTile;
+    const playerIdx = get(currentPlayerIndex);
+    const playerList = get(players);
+    const buyer = playerList[playerIdx];
+
+    // Must own this tile
+    const ownerMap = get(ownership);
+    if (ownerMap.get(tileId) !== buyer.id) return false;
+
+    // Must own full color group
+    if (!hasMonopoly(tileId, buyer.id)) return false;
+
+    const buildingMap = get(buildings);
+    const currentCount = buildingMap.get(tileId) ?? 0;
+
+    // Max 5 buildings (hotel)
+    if (currentCount >= 5) return false;
+
+    // Even building rule: this tile's count must be <= all others in the group
+    const groupTiles = tiles.filter(
+        (t) => t.type === TileType.Street && (t as StreetTile).color === street.color
+    );
+    const minInGroup = Math.min(...groupTiles.map((t) => buildingMap.get(t.id) ?? 0));
+    if (currentCount > minInGroup) return false;
+
+    // Check affordability
+    if (buyer.money < street.price.house) return false;
+
+    // Deduct cost
+    players.update((all) => {
+        all[playerIdx].money -= street.price.house;
+        return all;
+    });
+
+    // Add building
+    buildings.update((map) => {
+        map.set(tileId, currentCount + 1);
+        return map;
+    });
+
+    return true;
+}
+
+/**
  * Calculates the rent a player must pay when landing on an owned property.
  */
 export function calculateRent(tile: BoardTile, ownerId: number): number {
@@ -230,14 +322,19 @@ export function calculateRent(tile: BoardTile, ownerId: number): number {
 
     if (tile.type === TileType.Street) {
         const street = tile as StreetTile;
+        const buildingMap = get(buildings);
+        const buildingCount = buildingMap.get(tile.id) ?? 0;
 
-        // Check for monopoly (owner has all tiles in this color group)
-        const groupTiles = tiles.filter(
-            (t) => t.type === TileType.Street && (t as StreetTile).color === street.color
-        );
-        const ownsAll = groupTiles.every((t) => ownerMap.get(t.id) === ownerId);
+        // If there are buildings, use the building-level rent
+        if (buildingCount > 0 && buildingCount <= 4) {
+            return street.rent[buildingCount as 1 | 2 | 3 | 4];
+        }
+        if (buildingCount === 5) {
+            return street.rent.hotel;
+        }
 
-        // TODO: House/hotel upgrades — for now always base or monopoly rent
+        // No buildings — check for monopoly (doubled base rent)
+        const ownsAll = hasMonopoly(tile.id, ownerId);
         if (ownsAll) {
             return street.rent.monopoly;
         }
@@ -441,13 +538,26 @@ export async function executeCardEffect(card: ActionCard) {
             break;
         }
 
-        case 'repairs':
-            // Flat fee for now — no houses/hotels implemented yet
+        case 'repairs': {
+            // Charge per house and per hotel the player owns
+            const buildingMap = get(buildings);
+            const ownerMapR = get(ownership);
+            let repairCost = 0;
+            buildingMap.forEach((count, tileId) => {
+                if (ownerMapR.get(tileId) === player.id) {
+                    if (count === 5) {
+                        repairCost += card.perHotel ?? card.value ?? 0;
+                    } else {
+                        repairCost += count * (card.perHouse ?? card.value ?? 0);
+                    }
+                }
+            });
             players.update((all) => {
-                all[playerIdx].money -= card.value ?? 0;
+                all[playerIdx].money -= repairCost;
                 return all;
             });
             break;
+        }
     }
 }
 

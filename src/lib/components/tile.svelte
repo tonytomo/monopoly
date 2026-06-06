@@ -4,6 +4,7 @@
 		players,
 		tooltipTileId,
 		ownership,
+		buildings,
 		calculateRent,
 		lastDiceTotal
 	} from '$lib/stores/game';
@@ -56,7 +57,10 @@
 	const owner = $derived(isOwned ? $players.find((p) => p.id === ownerId) : undefined);
 	const ownerTextColor = $derived(owner ? owner.color : '#000000');
 	const currentRent = $derived(
-		isOwned && ownerId !== undefined ? calculateRent(tile, ownerId) + $lastDiceTotal * 0 : basePrice
+		// $buildings referenced to trigger re-evaluation when buildings change
+		$buildings && isOwned && ownerId !== undefined
+			? calculateRent(tile, ownerId) + $lastDiceTotal * 0
+			: basePrice
 	);
 
 	// Handle background coloring for non-street action/tax spaces
@@ -109,6 +113,37 @@
 		r: ''
 	};
 	const rounded = $derived(roundedCorners[orientation] || '');
+
+	// Building orientation
+	const buildingOrientations = {
+		tl: '',
+		tr: '',
+		bl: '',
+		br: '',
+		t: 'bottom-0 w-full grid-cols-4',
+		b: 'top-0 w-full grid-cols-4',
+		l: 'right-0 h-full grid-cols-1',
+		r: 'left-0 h-full grid-cols-1'
+	};
+	const buildingSide = $derived(buildingOrientations[orientation] || 'bottom-0');
+
+	// Hotel placement
+	const hotelPositions = {
+		tl: '',
+		tr: '',
+		bl: '',
+		br: '',
+		t: 'top-0 -translate-y-6',
+		b: 'bottom-0 translate-y-4',
+		l: 'right-0 translate-x-2',
+		r: 'left-0 -translate-x-2'
+	};
+	const hotelPosition = $derived(hotelPositions[orientation]);
+
+	// Building count for this tile (0 = none, 1-4 = houses, 5 = hotel)
+	const buildingCount = $derived(isStreet ? ($buildings.get(tile.id) ?? 0) : 0);
+	const isHotel = $derived(buildingCount === 5);
+	const houseCount = $derived(isHotel ? 0 : buildingCount);
 
 	function click(e: MouseEvent) {
 		console.log('Tile clicked:', tile);
@@ -226,6 +261,27 @@
 					></div>
 				</div>
 			{/each}
+		</div>
+	{/if}
+
+	<!-- 4. Buildings -->
+	{#if isStreet && buildingCount > 0}
+		<div class="pointer-events-none absolute z-10 grid {buildingSide}">
+			{#if isHotel}
+				<!-- Hotel -->
+				<div
+					class="absolute col-span-4 h-8 w-6 {hotelPosition} -rotate-45 skew-0 rounded-lg border-2 border-b-4 border-neutral-800 bg-linear-to-t from-rose-600 from-70% to-rose-400 to-80%"
+				></div>
+			{:else}
+				<!-- Houses -->
+				{#each Array.from({ length: houseCount }, (_, i) => i + 1) as i (i)}
+					<div class="relative size-1">
+						<div
+							class="absolute h-5 w-4 -translate-x-2 -translate-y-2 -rotate-45 skew-0 rounded-md border-2 border-b-4 border-neutral-800 bg-linear-to-t from-sky-600 from-70% to-sky-400 to-80%"
+						></div>
+					</div>
+				{/each}
+			{/if}
 		</div>
 	{/if}
 

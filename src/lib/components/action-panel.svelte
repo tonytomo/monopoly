@@ -2,9 +2,12 @@
 	import {
 		activeId,
 		ownership,
+		buildings,
 		players,
 		currentPlayerIndex,
 		buyProperty,
+		buyBuilding,
+		hasMonopoly,
 		finishTurn
 	} from '$lib/stores/game';
 	import { TileType, ColorGroup } from '$lib/types/tile';
@@ -44,6 +47,31 @@
 		tile && currentPlayer ? currentPlayer.position === tile.id : false
 	);
 
+	// Building state for street tiles
+	let buildingCount = $derived(
+		tile && tile.type === TileType.Street ? ($buildings.get(tile.id) ?? 0) : 0
+	);
+	let isHotel = $derived(buildingCount === 5);
+	let ownsMonopoly = $derived(
+		tile && isOwnedBySelf && currentPlayer ? hasMonopoly(tile.id, currentPlayer.id) : false
+	);
+	let canBuyBuilding = $derived(() => {
+		if (!tile || !isOwnedBySelf || !isStandingOnTile || !ownsMonopoly) return false;
+		if (tile.type !== TileType.Street) return false;
+		if (buildingCount >= 5) return false;
+
+		// Even building rule check
+		const groupTiles = tiles.filter((t) => t.type === TileType.Street && t.color === tile.color);
+		const minInGroup = Math.min(...groupTiles.map((t) => $buildings.get(t.id) ?? 0));
+		if (buildingCount > minInGroup) return false;
+
+		// Affordability
+		if (!currentPlayer || currentPlayer.money < tile.price.house) return false;
+
+		return true;
+	});
+	let buildingPrice = $derived(tile && tile.type === TileType.Street ? tile.price.house : 0);
+
 	function close() {
 		$activeId = -1;
 		finishTurn();
@@ -52,6 +80,12 @@
 	function handleBuy() {
 		if (tile && isUnowned && canAfford && isStandingOnTile) {
 			buyProperty(tile.id);
+		}
+	}
+
+	function handleBuyBuilding() {
+		if (tile && canBuyBuilding()) {
+			buyBuilding(tile.id);
 		}
 	}
 
@@ -174,29 +208,47 @@
 					<!-- Rent List -->
 					<div class="space-y-1.5 text-xs font-bold">
 						<div
-							class="mb-2 flex items-center justify-between border-b-2 border-neutral-900 pb-1.5 text-center font-black"
+							class="mb-2 flex items-center justify-between border-b-2 border-neutral-900 pb-1.5 text-center font-black
+								{isOwnedBySelf && buildingCount === 0 ? 'rounded bg-emerald-100 px-1' : ''}"
 						>
 							<span>SEWA TANAH KOSONG</span>
 							<span class="text-sm">{tile.rent.base}M</span>
 						</div>
-						<div class="flex items-center justify-between text-neutral-700">
+						<div
+							class="flex items-center justify-between {isOwnedBySelf && buildingCount === 1
+								? 'rounded bg-sky-100 px-1 text-sky-900'
+								: 'text-neutral-700'}"
+						>
 							<span>Dengan 1 Rumah</span>
 							<span>{tile.rent[1]}M</span>
 						</div>
-						<div class="flex items-center justify-between text-neutral-700">
+						<div
+							class="flex items-center justify-between {isOwnedBySelf && buildingCount === 2
+								? 'rounded bg-sky-100 px-1 text-sky-900'
+								: 'text-neutral-700'}"
+						>
 							<span>Dengan 2 Rumah</span>
 							<span>{tile.rent[2]}M</span>
 						</div>
-						<div class="flex items-center justify-between text-neutral-700">
+						<div
+							class="flex items-center justify-between {isOwnedBySelf && buildingCount === 3
+								? 'rounded bg-sky-100 px-1 text-sky-900'
+								: 'text-neutral-700'}"
+						>
 							<span>Dengan 3 Rumah</span>
 							<span>{tile.rent[3]}M</span>
 						</div>
-						<div class="flex items-center justify-between text-neutral-700">
+						<div
+							class="flex items-center justify-between {isOwnedBySelf && buildingCount === 4
+								? 'rounded bg-sky-100 px-1 text-sky-900'
+								: 'text-neutral-700'}"
+						>
 							<span>Dengan 4 Rumah</span>
 							<span>{tile.rent[4]}M</span>
 						</div>
 						<div
-							class="mb-2 flex items-center justify-between border-b border-dashed border-neutral-400 pb-2 font-black text-red-700"
+							class="mb-2 flex items-center justify-between border-b border-dashed border-neutral-400 pb-2 font-black
+								{isOwnedBySelf && buildingCount === 5 ? 'rounded bg-rose-100 px-1 text-rose-800' : 'text-red-700'}"
 						>
 							<span>DENGAN HOTEL</span>
 							<span>{tile.rent.hotel}M</span>
@@ -374,8 +426,60 @@
 						>
 					</div>
 				{:else if isOwnedBySelf}
-					<div class="text-center font-mono text-[0.7rem] text-emerald-400">
-						✓ Kamu memiliki properti ini
+					<div class="space-y-3">
+						<!-- Current building status -->
+						{#if tile.type === TileType.Street}
+							<div class="flex items-center justify-between text-xs">
+								<span class="font-bold text-neutral-400">Bangunan</span>
+								<span class="font-extrabold text-neutral-200">
+									{#if isHotel}
+										🏨 Hotel
+									{:else if buildingCount > 0}
+										{'🏠'.repeat(buildingCount)} {buildingCount} Rumah
+									{:else}
+										Tanah Kosong
+									{/if}
+								</span>
+							</div>
+						{/if}
+
+						<!-- Buy building button -->
+						{#if isStandingOnTile && tile.type === TileType.Street}
+							{#if ownsMonopoly && buildingCount < 5}
+								<button
+									onclick={handleBuyBuilding}
+									disabled={!canBuyBuilding()}
+									class="build-btn w-full rounded-xl py-3 text-sm font-extrabold tracking-wide uppercase transition-all
+										{canBuyBuilding()
+										? 'cursor-pointer bg-sky-500 text-white shadow-lg shadow-sky-500/25 hover:bg-sky-400 hover:shadow-sky-400/30 active:scale-[0.98]'
+										: 'cursor-not-allowed bg-neutral-800 text-neutral-500'}"
+								>
+									{#if canBuyBuilding()}
+										{buildingCount === 4 ? 'Upgrade ke Hotel' : 'Beli Rumah'} — {buildingPrice}M
+									{:else if buildingCount >= 5}
+										Bangunan Maksimal
+									{:else if !ownsMonopoly}
+										Perlu monopoli grup warna
+									{:else if currentPlayer && currentPlayer.money < buildingPrice}
+										Uang tidak cukup
+									{:else}
+										Bangun merata dahulu
+									{/if}
+								</button>
+							{:else if buildingCount >= 5}
+								<div class="text-center font-mono text-[0.7rem] text-amber-400">
+									🏨 Bangunan sudah maksimal
+								</div>
+							{:else if !ownsMonopoly}
+								<div class="text-center font-mono text-[0.7rem] text-neutral-500">
+									🔒 Perlu semua properti dalam grup warna untuk membangun
+								</div>
+							{/if}
+						{:else if !isStandingOnTile && tile.type === TileType.Street}
+							<div class="text-center font-mono text-[0.7rem] text-emerald-400">
+								✓ Kamu memiliki properti ini
+							</div>
+						{/if}
 					</div>
 				{:else if isOwnedByOther && ownerPlayer}
 					<div class="text-center font-mono text-[0.7rem] text-red-400">
@@ -420,6 +524,21 @@
 		}
 		50% {
 			box-shadow: 0 4px 20px rgba(16, 185, 129, 0.4);
+		}
+	}
+
+	/* Build button pulse animation */
+	.build-btn:not(:disabled) {
+		animation: build-pulse 2s ease-in-out infinite;
+	}
+
+	@keyframes build-pulse {
+		0%,
+		100% {
+			box-shadow: 0 4px 14px rgba(14, 165, 233, 0.25);
+		}
+		50% {
+			box-shadow: 0 4px 20px rgba(14, 165, 233, 0.4);
 		}
 	}
 </style>
