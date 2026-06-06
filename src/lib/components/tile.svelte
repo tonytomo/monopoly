@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { currentPlayerIndex, players } from '$lib/stores/game';
+	import { currentPlayerIndex, players, tooltipTileId } from '$lib/stores/game';
 	import { ColorGroup, TileType, type BoardTile } from '$lib/types/tile';
+	import TileTooltip from './tile-tooltip.svelte';
 
 	interface Props {
 		tile: BoardTile;
@@ -94,8 +95,14 @@
 	};
 	const rounded = $derived(roundedCorners[orientation] || '');
 
-	function click() {
+	function click(e: MouseEvent) {
 		console.log('Tile clicked:', tile);
+		e.stopPropagation();
+		if ($tooltipTileId === tile.id) {
+			$tooltipTileId = -1;
+		} else {
+			$tooltipTileId = tile.id;
+		}
 	}
 </script>
 
@@ -205,4 +212,6 @@
 			{/each}
 		</div>
 	{/if}
+
+	<TileTooltip {tile} />
 </button>

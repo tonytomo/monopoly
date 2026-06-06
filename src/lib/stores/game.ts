@@ -5,6 +5,7 @@ import { writable, get } from 'svelte/store';
 
 // Global active UI panel inspectors
 export const activeId = writable<number>(-1);
+export const tooltipTileId = writable<number>(-1);
 export const isMoving = writable<boolean>(false); // UI lock to prevent rolling mid-move
 
 // Core state stores
