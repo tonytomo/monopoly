@@ -1,14 +1,6 @@
 <script lang="ts">
 	import { players, currentPlayerIndex } from '$lib/stores/game';
 
-	// Map Tailwind bg-* tokens to raw hex for inline use
-	const colorMap: Record<string, string> = {
-		'bg-red-500': '#ef4444',
-		'bg-blue-500': '#3b82f6',
-		'bg-yellow-500': '#eab308',
-		'bg-green-500': '#22c55e'
-	};
-
 	function formatMoney(amount: number): string {
 		return `$${amount.toLocaleString()}`;
 	}
@@ -18,7 +10,6 @@
 <div class="hud-panel">
 	{#each $players as player, i (player.id)}
 		{@const isActive = i === $currentPlayerIndex}
-		{@const dotColor = colorMap[player.color] ?? '#9ca3af'}
 
 		<div
 			class="player-row"
@@ -29,7 +20,9 @@
 			<!-- Color indicator dot -->
 			<span
 				class="color-dot"
-				style="background: {dotColor}; box-shadow: 0 0 {isActive ? '8px' : '0px'} {dotColor};"
+				style="background: {player.color}; box-shadow: 0 0 {isActive
+					? '8px'
+					: '0px'} {player.color};"
 			></span>
 
 			<!-- Name -->

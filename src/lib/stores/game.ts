@@ -10,10 +10,10 @@ export const isMoving = writable<boolean>(false); // UI lock to prevent rolling 
 
 // Core state stores
 export const players = writable<Player[]>([
-    { id: 0, name: 'Alpha', color: 'bg-red-500', position: 0, money: 1500, inJail: false, jailTurnsLeft: 0, isBankrupt: false },
-    { id: 1, name: 'Beta', color: 'bg-blue-500', position: 0, money: 1500, inJail: false, jailTurnsLeft: 0, isBankrupt: false },
-    { id: 2, name: 'Gamma', color: 'bg-yellow-500', position: 0, money: 1500, inJail: false, jailTurnsLeft: 0, isBankrupt: false },
-    { id: 3, name: 'Tetha', color: 'bg-green-500', position: 0, money: 1500, inJail: false, jailTurnsLeft: 0, isBankrupt: false }
+    { id: 0, name: 'Alpha', color: '#fb2c36', position: 0, money: 1500, inJail: false, jailTurnsLeft: 0, isBankrupt: false },
+    { id: 1, name: 'Beta', color: '#0277bd', position: 0, money: 1500, inJail: false, jailTurnsLeft: 0, isBankrupt: false },
+    { id: 2, name: 'Gamma', color: '#fbc02d', position: 0, money: 1500, inJail: false, jailTurnsLeft: 0, isBankrupt: false },
+    { id: 3, name: 'Tetha', color: '#2e7d32', position: 0, money: 1500, inJail: false, jailTurnsLeft: 0, isBankrupt: false }
 ]);
 export const currentPlayerIndex = writable<number>(0);
 
@@ -200,7 +200,7 @@ export function buyProperty(tileId: number) {
 /**
  * Calculates the rent a player must pay when landing on an owned property.
  */
-function calculateRent(tile: BoardTile, ownerId: number): number {
+export function calculateRent(tile: BoardTile, ownerId: number): number {
     const ownerMap = get(ownership);
 
     if (tile.type === TileType.Street) {

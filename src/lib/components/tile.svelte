@@ -1,5 +1,12 @@
 <script lang="ts">
-	import { currentPlayerIndex, players, tooltipTileId } from '$lib/stores/game';
+	import {
+		currentPlayerIndex,
+		players,
+		tooltipTileId,
+		ownership,
+		calculateRent,
+		lastDiceTotal
+	} from '$lib/stores/game';
 	import { ColorGroup, TileType, type BoardTile } from '$lib/types/tile';
 	import TileTooltip from './tile-tooltip.svelte';
 
@@ -43,6 +50,14 @@
 
 	// Inline-optimized presentation helpers
 	const streetColor = $derived(tile.type === TileType.Street ? colorMap[tile.color] : '');
+
+	const ownerId = $derived($ownership.get(tile.id));
+	const isOwned = $derived(ownerId !== undefined);
+	const owner = $derived(isOwned ? $players.find((p) => p.id === ownerId) : undefined);
+	const ownerTextColor = $derived(owner ? owner.color : '#000000');
+	const currentRent = $derived(
+		isOwned && ownerId !== undefined ? calculateRent(tile, ownerId) + $lastDiceTotal * 0 : basePrice
+	);
 
 	// Handle background coloring for non-street action/tax spaces
 	const tileBgColor = $derived(() => {
@@ -184,8 +199,11 @@
 
 		<!-- Price displays -->
 		{#if isBuyable && basePrice !== null}
-			<p class="text-[0.65rem] font-black tracking-tight text-neutral-700/50">
-				{basePrice}M
+			<p
+				class="text-[0.65rem] font-black tracking-tight"
+				style={isOwned ? `color: ${ownerTextColor}` : ''}
+			>
+				{isOwned ? currentRent : basePrice}M
 			</p>
 		{:else if tile.type === TileType.Tax}
 			<p class="text-[0.65rem] font-black tracking-tight text-rose-700/50">
@@ -203,10 +221,8 @@
 						class="absolute h-2 w-4 translate-x-2 translate-y-3 -rotate-45 skew-0 rounded-[100%] bg-neutral-900/50"
 					></div>
 					<div
-						class="absolute h-8 w-4 -translate-y-2 -rotate-45 skew-0 animate-bounce rounded-full border-2 border-b-4 border-neutral-100 {token.color} {$currentPlayerIndex ===
-						token.id
-							? ''
-							: 'opacity-50'}"
+						class="absolute h-8 w-4 -translate-y-2 -rotate-45 skew-0 animate-bounce rounded-full border-2 border-b-4 border-neutral-100"
+						style={`background-color: ${token.color}; opacity: ${$currentPlayerIndex === token.id ? '1' : '0.5'}`}
 					></div>
 				</div>
 			{/each}
