@@ -5,5 +5,6 @@ export interface Player {
     position: number;
     money: number;
     inJail: boolean;
+    jailTurnsLeft: number; // Turns remaining before auto-release (0 = free)
     isBankrupt: boolean;
 }

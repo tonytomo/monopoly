@@ -5,10 +5,9 @@
 	interface Props {
 		tile: BoardTile;
 		orientation: 't' | 'b' | 'l' | 'r' | 'tl' | 'tr' | 'bl' | 'br';
-		ownColor?: string;
 	}
 
-	let { tile, orientation, ownColor = 'bg-neutral-300' }: Props = $props();
+	let { tile, orientation }: Props = $props();
 
 	// Player color tokens
 	let localTokens = $derived($players.filter((p) => p.position === tile.id && !p.isBankrupt));
@@ -103,56 +102,52 @@
 <button
 	id="s{tile.id}"
 	onclick={click}
-	class="relative flex cursor-pointer flex-col items-center justify-between border border-neutral-200 p-1 transition-all duration-200 select-none {rounded} {tileBgColor()}"
+	class="relative flex cursor-pointer flex-col border border-neutral-200 p-1 transition-all duration-200 select-none {rounded} {tileBgColor()}"
 >
 	<!-- 1. Header Bar for Street/City Properties -->
 	{#if isStreet}
 		{#if orientation === 'b'}
 			<div
-				class="absolute top-0 left-0 flex min-h-7 w-full flex-col items-center border-b border-neutral-200/60 {streetColor}"
+				class="absolute top-0 left-0 flex h-1/2 w-full flex-col items-center border-b border-neutral-200/60 {streetColor}"
 			>
 				<p
 					class="flex w-min flex-1 items-center text-[0.55rem] leading-none font-black tracking-wider uppercase {rotation}"
 				>
 					{tile.displayName}
 				</p>
-				<div class="h-1 w-full {ownColor}"></div>
 			</div>
 		{/if}
 		{#if orientation === 't'}
 			<div
-				class="absolute bottom-0 left-0 flex min-h-7 w-full flex-col items-center border-t border-neutral-200/60 {streetColor}"
+				class="absolute bottom-0 left-0 flex h-1/2 w-full flex-col items-center border-t border-neutral-200/60 {streetColor}"
 			>
 				<p
 					class="flex w-min flex-1 items-center text-[0.55rem] leading-none font-black tracking-wider uppercase {rotation}"
 				>
 					{tile.displayName}
 				</p>
-				<div class="h-1 w-full {ownColor}"></div>
 			</div>
 		{/if}
 		{#if orientation === 'l'}
 			<div
-				class="absolute top-0 right-0 flex h-full min-w-7 items-center border-l border-neutral-200/60 {streetColor}"
+				class="absolute top-0 right-0 flex h-full w-1/2 items-center border-l border-neutral-200/60 {streetColor}"
 			>
 				<p
-					class="flex w-min flex-1 items-center text-[0.55rem] leading-none font-black tracking-wider uppercase {rotation}"
+					class="flex w-min flex-1 justify-center text-[0.55rem] leading-none font-black tracking-wider uppercase {rotation}"
 				>
 					{tile.displayName}
 				</p>
-				<div class="h-full w-1 {ownColor}"></div>
 			</div>
 		{/if}
 		{#if orientation === 'r'}
 			<div
-				class="absolute top-0 left-0 flex h-full min-w-7 items-center border-r border-neutral-200/60 {streetColor}"
+				class="absolute top-0 left-0 flex h-full w-1/2 items-center border-r border-neutral-200/60 {streetColor}"
 			>
 				<p
-					class="flex w-min flex-1 items-center text-[0.55rem] leading-none font-black tracking-wider uppercase {rotation}"
+					class="flex w-min flex-1 justify-center text-[0.55rem] leading-none font-black tracking-wider uppercase {rotation}"
 				>
 					{tile.displayName}
 				</p>
-				<div class="h-full w-1 {ownColor}"></div>
 			</div>
 		{/if}
 	{/if}
@@ -165,7 +160,7 @@
 	>
 		{#if !isStreet}
 			<!-- Non-street descriptive title / iconic graphic -->
-			<div class="flex flex-1 items-center justify-center">
+			<div class="flex flex-1 items-center">
 				<span
 					class="w-min text-center leading-none font-extrabold tracking-wide uppercase {tile
 						.displayName.length > 4
@@ -201,7 +196,7 @@
 						class="absolute h-2 w-4 translate-x-2 translate-y-3 -rotate-45 skew-0 rounded-[100%] bg-neutral-900/50"
 					></div>
 					<div
-						class="absolute h-8 w-4 -translate-y-2 -rotate-45 skew-0 animate-bounce rounded-full border-2 border-neutral-700 {token.color} {$currentPlayerIndex ===
+						class="absolute h-8 w-4 -translate-y-2 -rotate-45 skew-0 animate-bounce rounded-full border-2 border-b-4 border-neutral-100 {token.color} {$currentPlayerIndex ===
 						token.id
 							? ''
 							: 'opacity-50'}"
