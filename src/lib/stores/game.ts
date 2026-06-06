@@ -58,24 +58,6 @@ export function initDecks() {
 // Auto-init decks on module load
 initDecks();
 
-// ===== TEST CODE — REMOVE BEFORE PRODUCTION =====
-// Gives player 0 ownership of all purchasable properties for testing buildings
-{
-    const testOwnership = new Map<number, number>();
-    const testBuildings = new Map<number, number>();
-    for (const t of tiles) {
-        if (t.type === TileType.Street || t.type === TileType.Railroad || t.type === TileType.Utility) {
-            testOwnership.set(t.id, 0);
-        }
-        if (t.type === TileType.Street) {
-            testBuildings.set(t.id, 4);
-        }
-    }
-    ownership.set(testOwnership);
-    buildings.set(testBuildings);
-}
-// ===== END TEST CODE =====
-
 /**
  * Core dice roll handler — enforces doubles, triple-doubles-to-jail, and auto-advance rules.
  * Called by the dice panel after the animation settles.
