@@ -8,7 +8,10 @@
 		buyProperty,
 		buyBuilding,
 		hasMonopoly,
-		finishTurn
+		finishTurn,
+		pendingRentPayment,
+		payPendingRent,
+		acquirePendingProperty
 	} from '$lib/stores/game';
 	import { TileType, ColorGroup } from '$lib/types/tile';
 	import { fly, fade } from 'svelte/transition';
@@ -147,7 +150,8 @@
 			</div>
 			<button
 				onclick={close}
-				class="flex size-8 cursor-pointer items-center justify-center rounded-lg border border-neutral-800 bg-neutral-900 text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white"
+				disabled={$pendingRentPayment !== null}
+				class="flex size-8 cursor-pointer items-center justify-center rounded-lg border border-neutral-800 bg-neutral-900 text-neutral-400 transition-colors hover:bg-neutral-800 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
 			>
 				✕
 			</button>
@@ -482,9 +486,37 @@
 						{/if}
 					</div>
 				{:else if isOwnedByOther && ownerPlayer}
-					<div class="text-center font-mono text-[0.7rem] text-red-400">
-						⚠ Sewa dibayar ke {ownerPlayer.name}
-					</div>
+					{#if $pendingRentPayment && $pendingRentPayment.tileId === tile.id}
+						<div class="space-y-3">
+							<button
+								onclick={payPendingRent}
+								class="w-full cursor-pointer rounded-xl bg-red-500 py-3 text-sm font-extrabold tracking-wide text-white uppercase shadow-lg shadow-red-500/25 transition-all hover:bg-red-400 hover:shadow-red-400/30 active:scale-[0.98]"
+							>
+								Bayar Sewa — {$pendingRentPayment.rent}M
+							</button>
+
+							<button
+								onclick={acquirePendingProperty}
+								disabled={!currentPlayer || !('price' in tile) || currentPlayer.money < (tile.price.base * 3)}
+								class="w-full rounded-xl py-3 text-sm font-extrabold tracking-wide uppercase transition-all
+									{(currentPlayer && 'price' in tile && currentPlayer.money >= (tile.price.base * 3))
+										? 'cursor-pointer bg-amber-500 text-white shadow-lg shadow-amber-500/25 hover:bg-amber-400 hover:shadow-amber-400/30 active:scale-[0.98]'
+										: 'cursor-not-allowed bg-neutral-800 text-neutral-500'}"
+							>
+								{#if currentPlayer && 'price' in tile && currentPlayer.money >= (tile.price.base * 3)}
+									Akuisisi (3x) — {tile.price.base * 3}M
+								{:else if 'price' in tile}
+									Uang tidak cukup untuk Akuisisi ({tile.price.base * 3}M)
+								{:else}
+									Tidak bisa diakuisisi
+								{/if}
+							</button>
+						</div>
+					{:else}
+						<div class="text-center font-mono text-[0.7rem] text-red-400">
+							⚠ Sewa dibayar ke {ownerPlayer.name}
+						</div>
+					{/if}
 				{/if}
 			</div>
 		{/if}

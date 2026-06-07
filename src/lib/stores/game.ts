@@ -40,6 +40,14 @@ export const chanceDeck = writable<number[]>([]);
 export const communityChestDeck = writable<number[]>([]);
 export const drawnCard = writable<ActionCard | null>(null);
 
+// Pending rent or acquire action
+export const pendingRentPayment = writable<{
+    payerIdx: number;
+    receiverIdx: number;
+    rent: number;
+    tileId: number;
+} | null>(null);
+
 /** Fisher-Yates shuffle — returns a new shuffled copy */
 function shuffle(arr: number[]): number[] {
     const a = [...arr];
@@ -225,6 +233,94 @@ export function buyProperty(tileId: number) {
         map.set(tileId, buyer.id);
         return map;
     });
+}
+
+/**
+ * Checks if any player has gone bankrupt and processes their properties.
+ */
+export function checkBankruptcies() {
+    const allPlayers = get(players);
+    for (let i = 0; i < allPlayers.length; i++) {
+        if (!allPlayers[i].isBankrupt && allPlayers[i].money < 0) {
+            processBankruptcy(i);
+        }
+    }
+}
+
+function processBankruptcy(playerIdx: number) {
+    players.update((all) => {
+        all[playerIdx].isBankrupt = true;
+        return all;
+    });
+
+    const tilesToClear: number[] = [];
+    ownership.update((map) => {
+        const pList = get(players);
+        for (const [tileId, ownerId] of map.entries()) {
+            if (ownerId === pList[playerIdx].id) {
+                tilesToClear.push(tileId);
+                map.delete(tileId);
+            }
+        }
+        return map;
+    });
+
+    buildings.update((bMap) => {
+        for (const tileId of tilesToClear) {
+            bMap.delete(tileId);
+        }
+        return bMap;
+    });
+}
+
+/**
+ * Pays the pending rent and clears the state.
+ */
+export function payPendingRent() {
+    const pending = get(pendingRentPayment);
+    if (!pending) return;
+
+    players.update((all) => {
+        all[pending.payerIdx].money -= pending.rent;
+        all[pending.receiverIdx].money += pending.rent;
+        return all;
+    });
+
+    pendingRentPayment.set(null);
+    checkBankruptcies();
+    activeId.set(-1);
+    finishTurn();
+}
+
+/**
+ * Acquires the pending property for 3x base price and clears the state.
+ */
+export function acquirePendingProperty() {
+    const pending = get(pendingRentPayment);
+    if (!pending) return;
+
+    const tile = tiles[pending.tileId];
+    if (!tile || !('price' in tile)) return;
+    
+    const acquireCost = tile.price.base * 3;
+
+    players.update((all) => {
+        all[pending.payerIdx].money -= acquireCost;
+        all[pending.receiverIdx].money += acquireCost;
+        return all;
+    });
+
+    // Transfer ownership
+    ownership.update((map) => {
+        const newOwnerId = get(players)[pending.payerIdx].id;
+        map.set(pending.tileId, newOwnerId);
+        return map;
+    });
+
+    pendingRentPayment.set(null);
+    checkBankruptcies();
+    activeId.set(-1);
+    finishTurn();
 }
 
 /**
@@ -544,6 +640,8 @@ export async function executeCardEffect(card: ActionCard) {
             break;
         }
     }
+
+    checkBankruptcies();
 }
 
 /**
@@ -609,6 +707,7 @@ function handleTileLanding(player: Player) {
                 all[playerIdx].money -= tile.cost;
                 return all;
             });
+            checkBankruptcies();
         }
         return;
     }
@@ -628,12 +727,23 @@ function handleTileLanding(player: Player) {
             const payerIdx = get(players).findIndex((p) => p.id === player.id);
             const receiverIdx = get(players).findIndex((p) => p.id === ownerId);
 
-            if (payerIdx !== -1 && receiverIdx !== -1) {
-                players.update((all) => {
-                    all[payerIdx].money -= rent;
-                    all[receiverIdx].money += rent;
-                    return all;
-                });
+            let canAcquire = false;
+            if (tile.type === TileType.Street) {
+                const bCount = get(buildings).get(tile.id) ?? 0;
+                if (bCount < 5) canAcquire = true;
+            }
+
+            if (canAcquire && payerIdx !== -1 && receiverIdx !== -1) {
+                pendingRentPayment.set({ payerIdx, receiverIdx, rent, tileId: tile.id });
+            } else {
+                if (payerIdx !== -1 && receiverIdx !== -1) {
+                    players.update((all) => {
+                        all[payerIdx].money -= rent;
+                        all[receiverIdx].money += rent;
+                        return all;
+                    });
+                    checkBankruptcies();
+                }
             }
         }
 
