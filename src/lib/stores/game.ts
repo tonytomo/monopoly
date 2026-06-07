@@ -91,16 +91,19 @@ export async function handleRoll(die1: number, die2: number) {
     // Execute board movement
     await move(die1 + die2);
 
-    // Non-double → end turn and advance to next player
+    // Non-double or player is in jail/bankrupt → end turn and advance to next player
     // But if a UI overlay is open (purchasable tile or drawn card), defer until it closes
-    if (!isDouble) {
-        if (get(activeId) >= 0 || get(drawnCard) !== null) {
+    const currentPlayer = get(players)[get(currentPlayerIndex)];
+    const turnEndsForcefully = currentPlayer.inJail || currentPlayer.isBankrupt;
+
+    if (!isDouble || turnEndsForcefully) {
+        if (get(activeId) >= 0 || get(drawnCard) !== null || get(pendingRentPayment) !== null) {
             pendingNextTurn.set(true);
         } else {
             nextTurn();
         }
     }
-    // Double (< 3) → player rolls again, no nextTurn call
+    // Double (< 3) and player still active → player rolls again, no nextTurn call
 }
 
 /**
@@ -108,7 +111,8 @@ export async function handleRoll(die1: number, die2: number) {
  * (non-double landing on a purchasable tile), this fires nextTurn now.
  */
 export function finishTurn() {
-    if (get(pendingNextTurn)) {
+    const currentPlayer = get(players)[get(currentPlayerIndex)];
+    if (get(pendingNextTurn) || currentPlayer.inJail || currentPlayer.isBankrupt) {
         pendingNextTurn.set(false);
         nextTurn();
     }
@@ -664,12 +668,11 @@ export async function dismissCard() {
         return;
     }
 
-    // Otherwise resume turn via the deferred-turn mechanism set by handleRoll
-    if (get(pendingNextTurn)) {
+    const currentPlayer = get(players)[get(currentPlayerIndex)];
+    if (get(pendingNextTurn) || currentPlayer.inJail || currentPlayer.isBankrupt) {
         pendingNextTurn.set(false);
         nextTurn();
     }
-    // If doubles, pendingNextTurn was never set — player rolls again
 }
 
 /**
