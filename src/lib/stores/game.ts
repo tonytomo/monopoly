@@ -3,6 +3,7 @@ import { TileType, type BoardTile, type StreetTile, type RailroadTile, type Util
 import { tiles } from '$lib/config/tiles';
 import { chanceCards, communityChestCards } from '$lib/config/actions';
 import { writable, get } from 'svelte/store';
+import { playStep, playNotification } from '$lib/utils/sound';
 
 // Global active UI panel inspectors
 export const activeId = writable<number>(-1);
@@ -127,6 +128,7 @@ export async function move(steps: number) {
     const activeIndex = get(currentPlayerIndex);
 
     for (let i = 0; i < steps; i++) {
+        playStep();
         players.update((allPlayers) => {
             const player = allPlayers[activeIndex];
             const nextPosition = (player.position + 1) % 40;
@@ -368,6 +370,7 @@ export function drawCard(deckType: 'CHANCE' | 'COMMUNITY_CHEST') {
     const card = cardList.find((c) => c.id === cardId);
     if (card) {
         drawnCard.set(card);
+        playNotification();
     }
 }
 
@@ -636,5 +639,6 @@ function handleTileLanding(player: Player) {
 
         // Always show the details panel when landing on a purchasable tile
         activeId.set(tile.id);
+        playNotification();
     }
 }

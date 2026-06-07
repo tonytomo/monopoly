@@ -6,6 +6,18 @@
 	import Hud from '$lib/components/hud.svelte';
 	import ActionPanel from '$lib/components/action-panel.svelte';
 	import CardOverlay from '$lib/components/card-overlay.svelte';
+	import { playBgMusic } from '$lib/utils/sound';
+	import { onMount } from 'svelte';
+
+	onMount(() => {
+		const startAudio = () => {
+			playBgMusic();
+			document.removeEventListener('click', startAudio);
+			document.removeEventListener('keydown', startAudio);
+		};
+		document.addEventListener('click', startAudio);
+		document.addEventListener('keydown', startAudio);
+	});
 
 	// Typed slices from the unified static board config
 	const bottomRow: BoardTile[] = tiles.slice(0, 11).toReversed();

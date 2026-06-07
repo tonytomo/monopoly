@@ -2,6 +2,7 @@
 	import { handleRoll, isMoving } from '$lib/stores/game';
 	import { fade, fly, scale } from 'svelte/transition';
 	import { cubicOut } from 'svelte/easing';
+	import { playDiceRolling, playNotification } from '$lib/utils/sound';
 
 	let die1 = $state(1);
 	let die2 = $state(1);
@@ -72,6 +73,7 @@
 		if (resultTimer) clearTimeout(resultTimer);
 
 		rolling = true;
+		playDiceRolling();
 
 		const result1 = Math.floor(Math.random() * 6) + 1;
 		const result2 = Math.floor(Math.random() * 6) + 1;
@@ -88,6 +90,7 @@
 		rolling = false;
 
 		// Display the middle screen overlay result
+		playNotification();
 		showMiddleResult = true;
 
 		// Auto-hide the middle overlay after 5 seconds
